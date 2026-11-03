@@ -70,16 +70,7 @@ const route = useRoute()
 watch(() => route.path, () => { loadAutoLock(); loadUnlockMode() })
 
 // Locking forgets the key in this window but keeps you logged in; unlock with your password.
-// The padlock animation plays when you lock (not when the screen is simply shown, e.g. after a reload).
-const lockIntro = ref(false)
-const afterLock = ref(false) // content waits for the padlock, until the safe is unlocked again
-function playLockIntro() {
-  lockIntro.value = true
-  afterLock.value = true
-  setTimeout(() => (lockIntro.value = false), 1200)
-}
 function lockSafe() {
-  playLockIntro()
   // Code-only unlock: hide the app but keep the key in memory. Any other mode forgets the key (the password brings it back).
   if (unlockMode.value === 'code' && privateKey.value) softLocked.value = true
   else lock()
@@ -98,7 +89,7 @@ const needUnlockCode = computed(() => unlockMode.value !== 'password')
 const loadUnlockMode = async () => {
   try { unlockMode.value = (await $fetch<{ unlockMode: UnlockMode }>('/api/settings')).unlockMode } catch { /* keep current */ }
 }
-watch(isLocked, (l) => { if (l) loadUnlockMode(); else afterLock.value = false }, { immediate: true })
+watch(isLocked, (l) => { if (l) loadUnlockMode() }, { immediate: true })
 
 async function unlock() {
   error.value = ''
@@ -131,44 +122,23 @@ provide('signOut', logout)
 </script>
 
 <template>
-  <!-- Locked: a soft blue screen with a padlock that clicks shut when you arrive here. -->
+  <!-- Locked: just the padlock and one input. The padlock clicks shut each time this screen appears. -->
   <main v-if="isLocked" class="lock-screen fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-gradient-to-br from-brand-50 to-brand-100 px-4 py-10">
-    <!-- Just locked: the padlock clicks shut first, then the logo and unlock card appear. -->
-    <Transition name="so-out">
-      <div v-if="lockIntro" class="absolute inset-0 z-10 grid place-items-center bg-gradient-to-br from-brand-50 to-brand-100" aria-hidden="true">
-        <div class="lock-icon grid size-24 place-items-center rounded-full bg-white text-brand-600 shadow-sm ring-1 ring-brand-100">
-          <svg viewBox="0 0 24 24" class="size-12 overflow-visible" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path class="shackle" d="M8 11V8a4 4 0 118 0v3" />
-            <rect class="lock-body" x="5" y="11" width="14" height="9" rx="2" fill="currentColor" fill-opacity=".25" />
-          </svg>
-        </div>
-      </div>
-    </Transition>
-    <div class="w-full max-w-sm">
-      <div class="lock-logo mx-auto mb-6 grid size-20 place-items-center" :style="afterLock ? { animationDelay: '1s' } : undefined">
-        <svg viewBox="100 100 824 824" class="size-20 drop-shadow-sm" aria-hidden="true">
-          <rect x="100" y="100" width="824" height="824" rx="185" fill="#2563eb" />
-          <path d="M512 232a190 190 0 0 1 112 344l44 218a30 30 0 0 1-30 36H386a30 30 0 0 1-30-36l44-218A190 190 0 0 1 512 232z" fill="#fff" transform="translate(512 512) scale(0.76) translate(-512 -531)" />
+    <div class="w-full max-w-xs text-center">
+      <div class="lock-icon mx-auto grid size-24 place-items-center rounded-full bg-white text-brand-600 shadow-sm ring-1 ring-brand-100">
+        <svg viewBox="0 0 24 24" class="size-12 overflow-visible" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path class="shackle" d="M8 11V8a4 4 0 118 0v3" />
+          <rect class="lock-body" x="5" y="11" width="14" height="9" rx="2" fill="currentColor" fill-opacity=".25" />
         </svg>
       </div>
-      <div class="lock-card rounded-2xl border border-slate-200 bg-white p-7 shadow-xl shadow-brand-600/5" :style="afterLock ? { animationDelay: '1.1s' } : undefined">
-        <h1 class="text-xl font-semibold tracking-tight">Safe locked</h1>
-        <p class="mt-1.5 text-sm leading-relaxed text-slate-500">{{ needPassword ? (needUnlockCode ? 'Enter your password and authenticator code to unlock your documents.' : 'Enter your password to unlock your documents.') : 'Enter your authenticator code to unlock your documents.' }}</p>
-        <form class="mt-6 space-y-4" @submit.prevent="unlock">
-          <div v-if="needPassword">
-            <label class="label" for="unlock-pw">Password</label>
-            <input id="unlock-pw" v-model="unlockPw" type="password" autocomplete="current-password" class="field" autofocus required>
-          </div>
-          <div v-if="needUnlockCode">
-            <label class="label" for="unlock-code">Authenticator code</label>
-            <input id="unlock-code" v-model="unlockCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456" class="field tracking-[0.3em]" :autofocus="!needPassword" required>
-          </div>
-          <p v-if="error" class="alert-error">{{ error }}</p>
-          <button class="btn w-full">Unlock</button>
-          <button type="button" class="btn-ghost w-full" @click="logout">Log out</button>
-        </form>
-      </div>
-      <p class="mt-6 text-center text-xs text-slate-400">SendSafe · end-to-end encrypted</p>
+      <form class="lock-card mt-8 space-y-3" @submit.prevent="unlock">
+        <input v-if="needPassword" id="unlock-pw" v-model="unlockPw" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password" class="field text-center" autofocus required>
+        <input v-if="needUnlockCode" id="unlock-code" v-model="unlockCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="Authenticator code" aria-label="Authenticator code" class="field text-center tracking-[0.2em]" :autofocus="!needPassword" required>
+        <p v-if="error" class="alert-error text-sm">{{ error }}</p>
+        <button class="sr-only">Unlock</button>
+        <p class="pt-1 text-xs text-slate-400">Press Enter to unlock</p>
+      </form>
+      <button type="button" class="mt-6 text-xs text-slate-400 hover:text-slate-600" @click="logout">Log out</button>
     </div>
   </main>
 
@@ -258,9 +228,6 @@ provide('signOut', logout)
 
 <style scoped>
 .lock-screen { animation: lock-bg .35s ease-out both; }
-.lock-logo { animation: lock-card .5s ease-out .15s both; }
-.so-out-leave-active { transition: opacity .35s ease; }
-.so-out-leave-to { opacity: 0; }
 @keyframes lock-bg { from { opacity: 0; } to { opacity: 1; } }
 /* The shackle drops into the body, then the whole lock gives a small bounce. */
 .shackle { animation: shackle .6s cubic-bezier(.3, 1.5, .5, 1) .3s both; }
