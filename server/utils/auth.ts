@@ -44,6 +44,7 @@ export interface OwnerRow {
   email: string
   totp_confirmed: number
   unlock_totp: number
+  autolock_minutes: number
   require_totp: number
   sharing_enabled: number
   onboarded: number

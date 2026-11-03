@@ -2,14 +2,14 @@
 useHead({ title: 'Settings | SendSafe' })
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
-const form = reactive({ displayName: '', requireTotp: true, sessionMinutes: 720 })
+const form = reactive({ displayName: '', requireTotp: true, sessionMinutes: 720, autoLockMinutes: 15 })
 const saving = ref(false)
 const saved = ref(false)
 const error = ref('')
 
-const loaded = await $fetch<{ displayName: string, requireTotp: boolean, totpConfirmed: boolean, sessionMinutes: number }>('/api/settings')
+const loaded = await $fetch<{ displayName: string, requireTotp: boolean, autoLockMinutes: number, totpConfirmed: boolean, sessionMinutes: number }>('/api/settings')
 const totpConfirmed = ref(loaded.totpConfirmed)
-Object.assign(form, { displayName: loaded.displayName, requireTotp: loaded.requireTotp, sessionMinutes: loaded.sessionMinutes })
+Object.assign(form, { displayName: loaded.displayName, requireTotp: loaded.requireTotp, autoLockMinutes: loaded.autoLockMinutes, sessionMinutes: loaded.sessionMinutes })
 // "Stay logged in for": three quick choices, or a custom length in minutes, hours or days.
 const PRESETS = [1, 5, 30]
 const UNIT_MIN = { minutes: 1, hours: 60, days: 1440 } as const
@@ -135,6 +135,20 @@ async function toggleSharing() {
         </div>
       </div>
       <p class="mt-1 text-xs text-slate-500">Applies from your next login.</p>
+    </div>
+
+    <div>
+      <p class="label">Lock the safe after inactivity</p>
+      <div role="radiogroup" aria-label="Lock the safe after inactivity" class="inline-flex max-w-full flex-wrap gap-1 rounded-xl bg-slate-100 p-1">
+        <button
+          v-for="o in [{ v: 0, l: 'Never' }, { v: 1, l: '1 min' }, { v: 5, l: '5 min' }, { v: 15, l: '15 min' }, { v: 30, l: '30 min' }, { v: 60, l: '1 hour' }]"
+          :key="o.v" type="button" role="radio" :aria-checked="form.autoLockMinutes === o.v"
+          class="rounded-lg px-3.5 py-1.5 text-sm font-medium transition"
+          :class="form.autoLockMinutes === o.v ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+          @click="form.autoLockMinutes = o.v"
+        >{{ o.l }}</button>
+      </div>
+      <p class="mt-1 text-xs text-slate-500">You get a few seconds of warning first and can keep using the app.</p>
     </div>
 
 <template v-if="totpConfirmed">

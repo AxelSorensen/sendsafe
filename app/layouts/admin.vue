@@ -25,6 +25,45 @@ async function finishTour() {
 }
 onBeforeUnmount(() => clearInterval(expiryTimer))
 provide('openTour', () => (showTour.value = true))
+// ---- Auto-lock after inactivity, with a short warning ----
+const autoLockMin = ref(0)
+const countdown = ref(0) // seconds left in the warning; 0 = no warning showing
+let lastActive = Date.now()
+let idleTimer: ReturnType<typeof setInterval> | undefined
+let warnTimer: ReturnType<typeof setInterval> | undefined
+const WARN_SECONDS = 5
+const loadAutoLock = async () => {
+  try { autoLockMin.value = (await $fetch<{ autoLockMinutes: number }>('/api/settings')).autoLockMinutes } catch { /* keep current */ }
+}
+const markActive = () => { if (!countdown.value) lastActive = Date.now() }
+function stopWarning() { clearInterval(warnTimer); countdown.value = 0 }
+function keepUsing() { stopWarning(); lastActive = Date.now() }
+function lockNow() { stopWarning(); lastActive = Date.now(); lock() }
+function startWarning() {
+  countdown.value = WARN_SECONDS
+  warnTimer = setInterval(() => {
+    countdown.value--
+    if (countdown.value <= 0) lockNow()
+  }, 1000)
+}
+const ACTIVITY = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart'] as const
+onMounted(() => {
+  loadAutoLock()
+  ACTIVITY.forEach(e => window.addEventListener(e, markActive, { passive: true }))
+  idleTimer = setInterval(() => {
+    if (!privateKey.value || !autoLockMin.value || countdown.value) return
+    if (Date.now() - lastActive >= autoLockMin.value * 60_000 - WARN_SECONDS * 1000) startWarning()
+  }, 1000)
+})
+onBeforeUnmount(() => {
+  clearInterval(idleTimer)
+  clearInterval(warnTimer)
+  ACTIVITY.forEach(e => window.removeEventListener(e, markActive))
+})
+// Settings may have changed the delay: pick it up when you leave the settings page.
+const route = useRoute()
+watch(() => route.path, loadAutoLock)
+
 // Locking forgets the key in this window but keeps you logged in; unlock with your password.
 function lockSafe() { lock() }
 // Planned sections, shown greyed out until they exist.
@@ -129,8 +168,9 @@ provide('signOut', logout)
         <NuxtLink to="/admin/settings" class="btn-ghost !p-2" title="Settings" aria-label="Settings">
           <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z" /></svg>
         </NuxtLink>
-        <button type="button" class="btn-ghost !p-2" title="Lock safe" aria-label="Lock safe" @click="lockSafe">
-          <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 118 0v3" /></svg>
+        <button type="button" class="btn !gap-1.5 !px-3 !py-1.5" title="Lock safe" @click="lockSafe">
+          <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 118 0v3" /></svg>
+          Lock
         </button>
       </div>
       <!-- Wide window: full buttons in the sidebar. -->
@@ -140,6 +180,25 @@ provide('signOut', logout)
       </div>
     </aside>
     <Onboarding v-if="showTour && privateKey" @done="finishTour" />
+    <Transition name="so">
+      <div v-if="countdown > 0 && privateKey" class="fixed inset-0 z-[65] grid place-items-center bg-slate-900/60 p-4 backdrop-blur-sm" role="alertdialog" aria-modal="true" aria-labelledby="al-title">
+        <div class="w-full max-w-xs rounded-2xl bg-white p-7 text-center shadow-2xl">
+          <div class="relative mx-auto grid size-20 place-items-center">
+            <svg viewBox="0 0 80 80" class="absolute inset-0 -rotate-90" aria-hidden="true">
+              <circle cx="40" cy="40" r="35" fill="none" stroke="currentColor" stroke-width="4" class="text-slate-100" />
+              <circle cx="40" cy="40" r="35" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" class="al-ring text-brand-600" :style="{ animationDuration: WARN_SECONDS + 's' }" />
+            </svg>
+            <span class="text-3xl font-semibold tabular-nums text-brand-600">{{ countdown }}</span>
+          </div>
+          <h2 id="al-title" class="mt-4 text-lg font-semibold tracking-tight">Locking your safe</h2>
+          <p class="mt-1 text-sm text-slate-500">You have been away for a while. Locking in {{ countdown }}…</p>
+          <div class="mt-6 flex flex-col gap-2">
+            <button type="button" class="btn w-full" autofocus @click="keepUsing">Keep using</button>
+            <button type="button" class="btn-ghost w-full" @click="lockNow">Lock now</button>
+          </div>
+        </div>
+      </div>
+    </Transition>
     <Transition name="so">
       <div v-if="signingOut" class="fixed inset-0 z-[60] grid place-items-center bg-white" role="status" aria-live="polite">
         <div class="flex flex-col items-center gap-4">
@@ -172,6 +231,8 @@ provide('signOut', logout)
 @keyframes lock-pop { 0% { transform: scale(1); } 50% { transform: scale(1.12); } 100% { transform: scale(1); } }
 .lock-card { animation: lock-card .5s ease-out .1s both; }
 @keyframes lock-card { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+.al-ring { stroke-dasharray: 220; animation: al-run linear forwards; }
+@keyframes al-run { from { stroke-dashoffset: 0; } to { stroke-dashoffset: 220; } }
 .so-enter-active { transition: opacity .25s ease; }
 .so-enter-from { opacity: 0; }
 @media (prefers-reduced-motion: reduce) { .lock-screen, .shackle, .lock-icon, .lock-card { animation: none !important; } }

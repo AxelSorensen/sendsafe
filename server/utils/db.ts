@@ -79,6 +79,8 @@ export function useDb(id: string = currentProfile()): DatabaseSync {
       'totp_confirmed INTEGER NOT NULL DEFAULT 1',
       // 1 = unlocking a locked safe needs the authenticator code as well as the password.
       'unlock_totp INTEGER NOT NULL DEFAULT 0',
+      // Minutes of no activity before the safe locks itself (0 = never).
+      'autolock_minutes INTEGER NOT NULL DEFAULT 15',
       'require_totp INTEGER NOT NULL DEFAULT 1',
       'session_hours INTEGER NOT NULL DEFAULT 12',
       'sharing_enabled INTEGER NOT NULL DEFAULT 1',
