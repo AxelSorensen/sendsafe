@@ -93,6 +93,8 @@ watch(isLocked, (l) => { if (l) loadUnlockMode() }, { immediate: true })
 
 // One question at a time: password first, then the code when both are needed.
 const unlocking = ref(false)
+// The send button only appears once there is something to send.
+const hasInput = computed(() => (showPw.value ? unlockPw.value : unlockCode.value).length > 0)
 const unlockStep = ref<'password' | 'code'>('password')
 const firstStep = computed<'password' | 'code'>(() => (needPassword.value ? 'password' : 'code'))
 const showPw = computed(() => unlockStep.value === 'password' && needPassword.value)
@@ -158,10 +160,10 @@ provide('signOut', logout)
           <template v-if="unlockStep === 'password'">{{ needUnlockCode ? 'Step 1 of 2 · ' : '' }}Enter your password</template>
           <template v-else>{{ needPassword ? 'Step 2 of 2 · ' : '' }}Enter the 6-digit code from your authenticator app</template>
         </p>
-        <div class="flex items-center gap-2.5">
+        <div class="relative">
           <input v-if="showPw" id="unlock-pw" v-model="unlockPw" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password" class="lock-input" required>
           <input v-if="showCode" id="unlock-code" v-model="unlockCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456" aria-label="Authenticator code" class="lock-input tracking-[0.35em]" required>
-          <button type="submit" class="grid size-12 shrink-0 place-items-center rounded-xl bg-brand-600 text-white shadow-sm shadow-brand-600/30 transition hover:bg-brand-700 active:scale-95 disabled:opacity-50" :disabled="unlocking" :aria-label="unlockStep === 'password' && needUnlockCode ? 'Continue' : 'Unlock'">
+          <button type="submit" class="absolute left-full top-0 ml-2.5 grid size-12 place-items-center rounded-xl bg-brand-600 text-white shadow-sm shadow-brand-600/30 transition duration-200 hover:bg-brand-700 active:scale-95 disabled:opacity-50" :class="hasInput ? 'translate-x-0 opacity-100' : 'pointer-events-none -translate-x-2 opacity-0'" :tabindex="hasInput ? 0 : -1" :disabled="unlocking" :aria-label="unlockStep === 'password' && needUnlockCode ? 'Continue' : 'Unlock'">
             <svg v-if="!unlocking" viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14" /><path d="M13 6l6 6-6 6" /></svg>
             <svg v-else viewBox="0 0 24 24" class="size-5 animate-spin" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 109 9" /></svg>
           </button>
@@ -260,7 +262,7 @@ provide('signOut', logout)
 <style scoped>
 .lock-screen { animation: lock-bg .35s ease-out both; }
 /* Big, quiet, centered input: white, soft shadow, a clear blue ring when focused. */
-.lock-input { height: 3rem; min-width: 0; flex: 1 1 auto; border-radius: .75rem; border: 1px solid rgb(226 232 240); background: #fff; padding: 0 1rem; text-align: center; font-size: 1rem; color: rgb(15 23 42); box-shadow: 0 1px 2px rgb(15 23 42 / .06); outline: none; transition: border-color .15s, box-shadow .15s; }
+.lock-input { display: block; width: 100%; height: 3rem; min-width: 0; border-radius: .75rem; border: 1px solid rgb(226 232 240); background: #fff; padding: 0 1rem; text-align: center; font-size: 1rem; color: rgb(15 23 42); box-shadow: 0 1px 2px rgb(15 23 42 / .06); outline: none; transition: border-color .15s, box-shadow .15s; }
 .lock-input::placeholder { color: rgb(148 163 184); letter-spacing: normal; }
 .lock-input:focus { border-color: rgb(37 99 235); box-shadow: 0 0 0 4px rgb(37 99 235 / .15); }
 @keyframes lock-bg { from { opacity: 0; } to { opacity: 1; } }
