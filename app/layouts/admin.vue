@@ -70,10 +70,17 @@ const route = useRoute()
 watch(() => route.path, () => { loadAutoLock(); loadUnlockMode() })
 
 // Locking forgets the key in this window but keeps you logged in; unlock with your password.
-function lockSafe() {
+// Locking plays a short "Locked" animation over the app first, then actually locks.
+const locking = ref(false)
+async function lockSafe() {
+  if (locking.value || isLocked.value) return
+  locking.value = true
+  await new Promise(r => setTimeout(r, 1100))
   // Code-only unlock: hide the app but keep the key in memory. Any other mode forgets the key (the password brings it back).
   if (unlockMode.value === 'code' && privateKey.value) softLocked.value = true
   else lock()
+  await new Promise(r => setTimeout(r, 450))
+  locking.value = false
 }
 // Planned sections, shown greyed out until they exist.
 const soon = [
@@ -150,6 +157,7 @@ provide('signOut', logout)
 </script>
 
 <template>
+  <div>
   <!-- Locked: just the padlock and one input. The padlock clicks shut each time this screen appears. -->
   <main v-if="isLocked" class="lock-screen fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-gradient-to-br from-brand-50 to-brand-100 px-4 py-10">
     <div class="w-full max-w-xs text-center">
@@ -285,6 +293,22 @@ provide('signOut', logout)
       </div>
     </main>
   </div>
+
+  <!-- "Locked" animation, drawn above both the app and the lock screen so it carries across the switch. -->
+  <Transition name="so">
+    <div v-if="locking" class="fixed inset-0 z-[90] grid place-items-center bg-gradient-to-br from-brand-50 to-brand-100" role="status" aria-live="polite">
+      <div class="flex flex-col items-center gap-5">
+        <div class="ok-icon grid size-24 place-items-center rounded-full bg-white text-brand-600 shadow-sm ring-1 ring-brand-100">
+          <svg viewBox="0 0 24 24" class="size-12 overflow-visible" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path class="lk-shackle" d="M8 11V8a4 4 0 118 0v3" />
+            <rect x="5" y="11" width="14" height="9" rx="2" fill="currentColor" fill-opacity=".25" />
+          </svg>
+        </div>
+        <p class="ok-text text-base font-medium text-slate-700">Locked</p>
+      </div>
+    </div>
+  </Transition>
+  </div>
 </template>
 
 <style scoped>
@@ -308,11 +332,15 @@ provide('signOut', logout)
 @keyframes ok-open { from { transform: translateY(0); } to { transform: translateY(-4px); } }
 .ok-check { stroke-dasharray: 12; animation: ok-draw .45s ease-out .6s both; }
 @keyframes ok-draw { from { stroke-dashoffset: 12; } to { stroke-dashoffset: 0; } }
+.lk-shackle { animation: lk-close .65s cubic-bezier(.3, 1.5, .5, 1) .3s both; }
+@keyframes lk-close { from { transform: translateY(-5px); } to { transform: translateY(0); } }
 .ok-icon { animation: ok-pop .5s ease-out .2s both; }
 @keyframes ok-pop { 0% { transform: scale(.85); opacity: 0; } 60% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
 .ok-text { animation: ok-rise .4s ease-out .7s both; }
 @keyframes ok-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 .so-enter-active { transition: opacity .25s ease; }
 .so-enter-from { opacity: 0; }
-@media (prefers-reduced-motion: reduce) { .ok-shackle, .ok-check, .ok-icon, .ok-text { animation: none !important; } .lock-screen, .shackle, .lock-icon, .lock-card { animation: none !important; } }
+.so-leave-active { transition: opacity .4s ease; }
+.so-leave-to { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .lk-shackle, .ok-shackle, .ok-check, .ok-icon, .ok-text { animation: none !important; } .lock-screen, .shackle, .lock-icon, .lock-card { animation: none !important; } }
 </style>
