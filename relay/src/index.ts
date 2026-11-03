@@ -66,7 +66,7 @@ code{background:#f1f5f9;padding:.1rem .35rem;border-radius:.35rem;font-size:.8re
 <p class="other" id="other"></p>
 <details><summary>Help installing</summary>
 <p><b>Which Mac?</b> Apple menu, About This Mac. "Chip: Apple M…" means Apple silicon, "Processor: Intel" means Intel.</p>
-<p><b>Mac:</b> open the file, drag SendSafe to Applications, then open it. If macOS can't verify it, right-click the app, choose Open, then Open again. If it says "damaged", run <code>xattr -cr /Applications/SendSafe.app</code> in Terminal.</p>
+<p><b>Mac:</b> open the file, drag SendSafe to Applications, then open it. If macOS says it can't verify it, click Done, open System Settings, Privacy &amp; Security, scroll down and click <b>Open Anyway</b> next to SendSafe (older macOS: right-click the app, choose Open). If it says "damaged", run <code>xattr -cr /Applications/SendSafe.app</code> in Terminal.</p>
 <p><b>Windows:</b> run the installer. If it says "Windows protected your PC", click More info, then Run anyway.</p>
 </details>
 </main>
