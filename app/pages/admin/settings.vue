@@ -86,21 +86,25 @@ async function toggleSharing() {
 
     <div>
       <label class="label" for="st-session">Stay logged in for</label>
-      <div class="flex flex-wrap gap-2">
-        <select id="st-session" v-model="mode" class="field w-auto min-w-40">
-          <option value="1">1 minute</option>
-          <option value="5">5 minutes</option>
-          <option value="30">30 minutes</option>
-          <option value="custom">Custom</option>
-        </select>
-        <template v-if="mode === 'custom'">
-          <input v-model.number="customVal" type="number" min="1" class="field w-24" aria-label="Custom length">
-          <select v-model="unit" class="field w-auto" aria-label="Unit">
-            <option value="minutes">minutes</option>
-            <option value="hours">hours</option>
-            <option value="days">days</option>
-          </select>
-        </template>
+      <div id="st-session" role="radiogroup" aria-label="Stay logged in for" class="inline-flex max-w-full flex-wrap gap-1 rounded-xl bg-slate-100 p-1">
+        <button
+          v-for="o in [{ v: '1', l: '1 minute' }, { v: '5', l: '5 minutes' }, { v: '30', l: '30 minutes' }, { v: 'custom', l: 'Custom' }]"
+          :key="o.v" type="button" role="radio" :aria-checked="mode === o.v"
+          class="rounded-lg px-3.5 py-1.5 text-sm font-medium transition"
+          :class="mode === o.v ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+          @click="mode = o.v"
+        >{{ o.l }}</button>
+      </div>
+      <div v-if="mode === 'custom'" class="mt-3 flex flex-wrap items-center gap-2">
+        <input v-model.number="customVal" type="number" min="1" class="field w-24" aria-label="Custom length">
+        <div role="radiogroup" aria-label="Unit" class="inline-flex gap-1 rounded-xl bg-slate-100 p-1">
+          <button
+            v-for="u in ['minutes', 'hours', 'days']" :key="u" type="button" role="radio" :aria-checked="unit === u"
+            class="rounded-lg px-3 py-1.5 text-sm font-medium transition"
+            :class="unit === u ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+            @click="unit = u as Unit"
+          >{{ u }}</button>
+        </div>
       </div>
       <p class="mt-1 text-xs text-slate-500">Applies from your next login.</p>
     </div>
