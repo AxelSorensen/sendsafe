@@ -2,14 +2,14 @@
 useHead({ title: 'Settings | SendSafe' })
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
-const form = reactive({ displayName: '', requireTotp: true, sessionMinutes: 720, autoLockMinutes: 15 })
+const form = reactive({ displayName: '', requireTotp: true, sessionMinutes: 720, autoLockMinutes: 15, unlockMode: 'password' })
 const saving = ref(false)
 const saved = ref(false)
 const error = ref('')
 
-const loaded = await $fetch<{ displayName: string, requireTotp: boolean, autoLockMinutes: number, totpConfirmed: boolean, sessionMinutes: number }>('/api/settings')
+const loaded = await $fetch<{ displayName: string, requireTotp: boolean, unlockMode: string, autoLockMinutes: number, totpConfirmed: boolean, sessionMinutes: number }>('/api/settings')
 const totpConfirmed = ref(loaded.totpConfirmed)
-Object.assign(form, { displayName: loaded.displayName, requireTotp: loaded.requireTotp, autoLockMinutes: loaded.autoLockMinutes, sessionMinutes: loaded.sessionMinutes })
+Object.assign(form, { displayName: loaded.displayName, requireTotp: loaded.requireTotp, autoLockMinutes: loaded.autoLockMinutes, unlockMode: loaded.unlockMode, sessionMinutes: loaded.sessionMinutes })
 // "Stay logged in for": three quick choices, or a custom length in minutes, hours or days.
 const PRESETS = [1, 5, 30]
 const UNIT_MIN = { minutes: 1, hours: 60, days: 1440 } as const
@@ -138,6 +138,26 @@ async function toggleSharing() {
     </div>
 
     <div>
+      <p class="label">Unlock a locked safe with</p>
+      <div role="radiogroup" aria-label="Unlock a locked safe with" class="inline-flex max-w-full flex-wrap gap-1 rounded-xl bg-slate-100 p-1">
+        <button
+          v-for="o in [{ v: 'password', l: 'Password' }, { v: 'code', l: 'Authenticator code' }, { v: 'both', l: 'Both' }]"
+          :key="o.v" type="button" role="radio" :aria-checked="form.unlockMode === o.v"
+          :disabled="o.v !== 'password' && !totpConfirmed"
+          class="rounded-lg px-3.5 py-1.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50"
+          :class="form.unlockMode === o.v ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+          @click="form.unlockMode = o.v"
+        >{{ o.l }}</button>
+      </div>
+      <p class="mt-1 text-xs text-slate-500">
+        <template v-if="form.unlockMode === 'code'">Your files stay unlocked in memory behind the lock screen, so the code alone opens it again. Logging in still needs your password.</template>
+        <template v-else-if="form.unlockMode === 'both'">Locking forgets your key. Unlocking needs your password and a fresh code.</template>
+        <template v-else>Locking forgets your key. Unlocking needs your password.</template>
+        <template v-if="!totpConfirmed"> Set up an authenticator above to use a code.</template>
+      </p>
+    </div>
+
+    <div>
       <p class="label">Lock the safe after inactivity</p>
       <div role="radiogroup" aria-label="Lock the safe after inactivity" class="inline-flex max-w-full flex-wrap gap-1 rounded-xl bg-slate-100 p-1">
         <button
@@ -156,11 +176,11 @@ async function toggleSharing() {
       <label class="flex cursor-pointer items-start gap-3">
         <input v-model="form.requireTotp" type="checkbox" class="mt-1 size-4 accent-brand-600">
         <span>
-          <span class="block text-sm font-medium text-slate-800">Require authenticator code to unlock your safe</span>
-          <span class="mt-0.5 block text-xs text-slate-500">Asked every time you log in and every time you unlock after locking. Turn off to use your password only. This is less secure: anyone with your password can get in.</span>
+          <span class="block text-sm font-medium text-slate-800">Require authenticator code to log in</span>
+          <span class="mt-0.5 block text-xs text-slate-500">Asked every time you log in. Turn off to log in with your password only. This is less secure: anyone with your password can get in.</span>
         </span>
       </label>
-      <p v-if="!form.requireTotp" class="alert-warn mt-3 text-xs">Two-factor is off. Your password is the only thing asked when you log in or unlock.</p>
+      <p v-if="!form.requireTotp" class="alert-warn mt-3 text-xs">Two-factor login is off. Your password is the only thing asked when you log in.</p>
     </div>
 
 </template>

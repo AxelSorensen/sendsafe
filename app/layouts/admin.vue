@@ -2,7 +2,10 @@
 const { privateKey, lock } = useVault()
 const unlockPw = ref('')
 const unlockCode = ref('')
-const needUnlockCode = ref(false)
+type UnlockMode = 'password' | 'code' | 'both'
+const unlockMode = ref<UnlockMode>('password')
+// "code" mode keeps the key in memory behind the lock screen, so the code alone opens it again.
+const softLocked = ref(false)
 const error = ref('')
 const { tunnel, init: initTunnel, retry: retryTunnel } = useTunnel()
 const showTour = ref(false)
@@ -38,7 +41,7 @@ const loadAutoLock = async () => {
 const markActive = () => { if (!countdown.value) lastActive = Date.now() }
 function stopWarning() { clearInterval(warnTimer); countdown.value = 0 }
 function keepUsing() { stopWarning(); lastActive = Date.now() }
-function lockNow() { stopWarning(); lastActive = Date.now(); lock() }
+function lockNow() { stopWarning(); lastActive = Date.now(); lockSafe() }
 function startWarning() {
   countdown.value = WARN_SECONDS
   warnTimer = setInterval(() => {
@@ -49,12 +52,12 @@ function startWarning() {
 const ACTIVITY = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart'] as const
 onMounted(() => {
   loadAutoLock()
+  loadUnlockMode()
   ACTIVITY.forEach(e => window.addEventListener(e, markActive, { passive: true }))
   idleTimer = setInterval(() => {
-    if (!privateKey.value || !autoLockMin.value || countdown.value) return
-    // TEMPORARY, dev app only: warn after 1 second of inactivity so the countdown can be tried quickly. Remove before release.
-    const idleMs = import.meta.dev ? 1000 : autoLockMin.value * 60_000 - WARN_SECONDS * 1000
-    if (Date.now() - lastActive >= Math.max(idleMs, 0)) startWarning()
+    if (isLocked.value || !autoLockMin.value || countdown.value) return
+    const idleMs = Math.max(autoLockMin.value * 60_000 - WARN_SECONDS * 1000, 0)
+    if (Date.now() - lastActive >= idleMs) startWarning()
   }, 1000)
 })
 onBeforeUnmount(() => {
@@ -64,10 +67,14 @@ onBeforeUnmount(() => {
 })
 // Settings may have changed the delay: pick it up when you leave the settings page.
 const route = useRoute()
-watch(() => route.path, loadAutoLock)
+watch(() => route.path, () => { loadAutoLock(); loadUnlockMode() })
 
 // Locking forgets the key in this window but keeps you logged in; unlock with your password.
-function lockSafe() { lock() }
+function lockSafe() {
+  // Code-only unlock: hide the app but keep the key in memory. Any other mode forgets the key (the password brings it back).
+  if (unlockMode.value === 'code' && privateKey.value) softLocked.value = true
+  else lock()
+}
 // Planned sections, shown greyed out until they exist.
 const soon = [
   { label: 'Messages', icon: ['M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z'] },
@@ -75,22 +82,28 @@ const soon = [
 ]
 const isSettings = computed(() => useRoute().path.startsWith('/admin/settings'))
 
-// When the safe is locked, find out whether this account wants a code to unlock it.
-watch(privateKey, async (k) => {
-  if (k) return
-  try { needUnlockCode.value = (await $fetch<{ unlockTotp: boolean }>('/api/settings')).unlockTotp } catch { needUnlockCode.value = false }
-}, { immediate: true })
+// What unlocking asks for, and whether a hard lock (key forgotten) needs the password.
+const isLocked = computed(() => !privateKey.value || softLocked.value)
+const needPassword = computed(() => !softLocked.value)
+const needUnlockCode = computed(() => unlockMode.value !== 'password')
+const loadUnlockMode = async () => {
+  try { unlockMode.value = (await $fetch<{ unlockMode: UnlockMode }>('/api/settings')).unlockMode } catch { /* keep current */ }
+}
+watch(isLocked, (l) => { if (l) loadUnlockMode() }, { immediate: true })
 
 async function unlock() {
   error.value = ''
   try {
     const v = await $fetch<{ salt: string, wrappedPrivateKey: string, wrapIv: string }>('/api/auth/unlock', { method: 'POST', body: { code: unlockCode.value } })
-    const { wrapKey } = await deriveKeys(unlockPw.value, v.salt)
-    privateKey.value = await unlockPrivateKey(wrapKey, v.wrappedPrivateKey, v.wrapIv)
+    if (needPassword.value) {
+      const { wrapKey } = await deriveKeys(unlockPw.value, v.salt)
+      privateKey.value = await unlockPrivateKey(wrapKey, v.wrappedPrivateKey, v.wrapIv)
+    }
+    softLocked.value = false
     unlockPw.value = ''
     unlockCode.value = ''
   } catch (e: any) {
-    error.value = e?.data?.statusMessage === 'Invalid code' ? 'That code is not right.' : 'Wrong password.'
+    error.value = e?.data?.statusMessage === 'Invalid code' ? 'That code is not right.' : needPassword.value ? 'Wrong password.' : 'Could not unlock.'
   }
 }
 
@@ -110,7 +123,7 @@ provide('signOut', logout)
 
 <template>
   <!-- Locked: a soft blue screen with a padlock that clicks shut when you arrive here. -->
-  <main v-if="!privateKey" class="lock-screen fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-gradient-to-br from-brand-50 to-brand-100 px-4 py-10">
+  <main v-if="isLocked" class="lock-screen fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-gradient-to-br from-brand-50 to-brand-100 px-4 py-10">
     <div class="w-full max-w-sm">
       <div class="lock-icon mx-auto mb-6 grid size-20 place-items-center rounded-full bg-white text-brand-600 shadow-sm ring-1 ring-brand-100">
         <svg viewBox="0 0 24 24" class="size-10 overflow-visible" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -120,15 +133,15 @@ provide('signOut', logout)
       </div>
       <div class="lock-card rounded-2xl border border-slate-200 bg-white p-7 shadow-xl shadow-brand-600/5">
         <h1 class="text-xl font-semibold tracking-tight">Safe locked</h1>
-        <p class="mt-1.5 text-sm leading-relaxed text-slate-500">Enter your password to unlock your documents.</p>
+        <p class="mt-1.5 text-sm leading-relaxed text-slate-500">{{ needPassword ? (needUnlockCode ? 'Enter your password and authenticator code to unlock your documents.' : 'Enter your password to unlock your documents.') : 'Enter your authenticator code to unlock your documents.' }}</p>
         <form class="mt-6 space-y-4" @submit.prevent="unlock">
-          <div>
+          <div v-if="needPassword">
             <label class="label" for="unlock-pw">Password</label>
             <input id="unlock-pw" v-model="unlockPw" type="password" autocomplete="current-password" class="field" autofocus required>
           </div>
           <div v-if="needUnlockCode">
             <label class="label" for="unlock-code">Authenticator code</label>
-            <input id="unlock-code" v-model="unlockCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456" class="field tracking-[0.3em]" required>
+            <input id="unlock-code" v-model="unlockCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456" class="field tracking-[0.3em]" :autofocus="!needPassword" required>
           </div>
           <p v-if="error" class="alert-error">{{ error }}</p>
           <button class="btn w-full">Unlock</button>
@@ -183,7 +196,7 @@ provide('signOut', logout)
     </aside>
     <Onboarding v-if="showTour && privateKey" @done="finishTour" />
     <Transition name="so">
-      <div v-if="countdown > 0 && privateKey" class="fixed inset-0 z-[65] grid place-items-center bg-slate-900/60 p-4 backdrop-blur-sm" role="alertdialog" aria-modal="true" aria-labelledby="al-title">
+      <div v-if="countdown > 0 && !isLocked" class="fixed inset-0 z-[65] grid place-items-center bg-slate-900/60 p-4 backdrop-blur-sm" role="alertdialog" aria-modal="true" aria-labelledby="al-title">
         <div class="w-full max-w-xs rounded-2xl bg-white p-7 text-center shadow-2xl">
           <div class="relative mx-auto grid size-20 place-items-center">
             <svg viewBox="0 0 80 80" class="absolute inset-0 -rotate-90" aria-hidden="true">

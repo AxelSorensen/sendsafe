@@ -1,9 +1,10 @@
-// Unlock a locked safe: the logged-in session is required, plus an authenticator code when the owner requires one (the same setting that guards login).
+// Unlock a locked safe. A logged-in session is required, plus an authenticator code when the owner chose
+// "code" or "password + code" in Settings. (With "code" the window keeps the key in memory while locked, so the code is all it needs.)
 export default defineEventHandler(async (event) => {
   requireOwner(event)
   rateLimit(`unlock:${clientIp(event)}`, 15, 15 * 60 * 1000)
   const o = getOwner()!
-  if (o.require_totp && o.totp_confirmed) {
+  if (o.totp_confirmed && o.unlock_mode !== 'password') {
     const { code } = (await readBody(event)) ?? {}
     const step = verifyTotp(o.totp_secret, String(code ?? ''), o.totp_last_step)
     if (!step) throw createError({ statusCode: 401, statusMessage: 'Invalid code' })

@@ -81,6 +81,8 @@ export function useDb(id: string = currentProfile()): DatabaseSync {
       'unlock_totp INTEGER NOT NULL DEFAULT 0',
       // Minutes of no activity before the safe locks itself (0 = never).
       'autolock_minutes INTEGER NOT NULL DEFAULT 15',
+      // What unlocking a locked safe asks for: 'password', 'code' or 'both'.
+      "unlock_mode TEXT NOT NULL DEFAULT 'password'",
       'require_totp INTEGER NOT NULL DEFAULT 1',
       'session_hours INTEGER NOT NULL DEFAULT 12',
       'sharing_enabled INTEGER NOT NULL DEFAULT 1',
@@ -88,8 +90,13 @@ export function useDb(id: string = currentProfile()): DatabaseSync {
       "relay_url TEXT NOT NULL DEFAULT ''",
       "relay_token TEXT NOT NULL DEFAULT ''"
     ]) {
-      try { db.exec(`ALTER TABLE owner ADD COLUMN ${col}`) } catch { /* already migrated */ }
+      try {
+        db.exec(`ALTER TABLE owner ADD COLUMN ${col}`)
+        // Existing accounts keep the old behaviour: a required login code also applied when unlocking.
+        if (col.startsWith('unlock_mode')) db.exec("UPDATE owner SET unlock_mode = 'both' WHERE require_totp = 1 AND totp_confirmed = 1")
+      } catch { /* already migrated */ }
     }
+    // Keep the old behaviour for existing accounts: a required code at login also applied when unlocking.
     // Session length is kept in minutes now (was hours). Convert existing values once, when the column is first added.
     try {
       db.exec('ALTER TABLE owner ADD COLUMN session_minutes INTEGER NOT NULL DEFAULT 720')
