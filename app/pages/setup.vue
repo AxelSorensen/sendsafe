@@ -7,7 +7,7 @@ const ready = ref(false)
 onMounted(async () => {
   try {
     status.value = await $fetch('/api/status')
-    if (status.value.setup) { await navigateTo('/login', { replace: true }); return }
+    if (status.value.setup) { location.replace('/login'); return }
     hasAccounts.value = (await $fetch<{ accounts: unknown[] }>('/api/profiles')).accounts.length > 0
   } finally {
     ready.value = true
@@ -142,7 +142,7 @@ function back() {
         <p v-if="error" class="alert-error">{{ error }}</p>
         <button :disabled="busy" class="btn w-full">{{ busy ? 'Generating keys…' : 'Create safe' }}</button>
         <p class="text-center text-sm text-slate-500">
-          Already have an account? <NuxtLink to="/login" class="font-medium text-brand-600 hover:underline">Log in</NuxtLink>
+          Already have an account? <a href="/login" class="font-medium text-brand-600 hover:underline">Log in</a>
         </p>
       </form>
 

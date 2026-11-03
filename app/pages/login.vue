@@ -18,7 +18,7 @@ onMounted(async () => {
     const st = await $fetch<{ setup: boolean }>('/api/status')
     const accounts = (await $fetch<{ accounts: unknown[] }>('/api/profiles')).accounts
     // Nothing to log in to yet (or only an abandoned "create account"): go to setup.
-    if (!accounts.length) { await navigateTo('/setup', { replace: true }); return }
+    if (!accounts.length) { location.replace('/setup'); return }
     void st
     try { email.value = localStorage.getItem(LAST) || '' } catch {}
     if (email.value) lookup().catch(() => {})
@@ -47,7 +47,7 @@ async function lookup() {
 
 async function addAccount() {
   await $fetch('/api/profiles', { method: 'POST' })
-  await navigateTo('/setup')
+  location.assign('/setup')
 }
 
 async function login() {

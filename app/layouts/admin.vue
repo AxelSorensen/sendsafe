@@ -11,7 +11,7 @@ onMounted(async () => {
     if (!privateKey.value) return
     try {
       const st = await $fetch<{ authed: boolean }>('/api/status')
-      if (!st.authed) { lock(); await navigateTo('/login') }
+      if (!st.authed) { lock(); location.assign('/login') }
     } catch { /* offline: try again next tick */ }
   }, 5000)
   initTunnel()
@@ -48,7 +48,7 @@ async function logout() {
   signingOut.value = true
   await Promise.all([$fetch('/api/auth/logout', { method: 'POST' }).catch(() => {}), new Promise(r => setTimeout(r, 900))])
   lock()
-  await navigateTo('/login')
+  location.assign('/login')
 }
 
 </script>
