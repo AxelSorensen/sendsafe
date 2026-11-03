@@ -13,6 +13,12 @@ async function finishTour() {
   await $fetch('/api/settings', { method: 'PATCH', body: { onboarded: true } }).catch(() => {})
 }
 provide('openTour', () => (showTour.value = true))
+// Planned sections, shown greyed out until they exist.
+const soon = [
+  { label: 'Send', icon: ['M22 2L11 13', 'M22 2l-7 20-4-9-9-4z'] },
+  { label: 'Messages', icon: ['M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z'] },
+  { label: 'Connections', icon: ['M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2', 'M9 11a4 4 0 100-8 4 4 0 000 8z', 'M23 21v-2a4 4 0 00-3-3.87', 'M16 3.13a4 4 0 010 7.75'] }
+]
 const isSettings = computed(() => useRoute().path.startsWith('/admin/settings'))
 
 async function unlock() {
@@ -56,6 +62,15 @@ async function logout() {
           <svg viewBox="0 0 24 24" class="size-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2" /><path d="M5.5 5.1L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.5-6.9A2 2 0 0016.8 4H7.2a2 2 0 00-1.7 1.1z" /></svg>
           Inbox
         </NuxtLink>
+        <span
+          v-for="t in soon" :key="t.label"
+          class="btn-ghost !justify-start cursor-not-allowed gap-3 !text-slate-400 hover:!bg-transparent hover:!text-slate-400"
+          aria-disabled="true" :title="`${t.label}: coming soon`"
+        >
+          <svg viewBox="0 0 24 24" class="size-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path v-for="d in t.icon" :key="d" :d="d" /></svg>
+          <span class="sr-only lg:not-sr-only">{{ t.label }}</span>
+          <span class="ml-auto hidden rounded-full bg-slate-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 lg:inline">Soon</span>
+        </span>
       </nav>
       <div class="ml-auto flex shrink-0 items-center gap-2 px-2 text-xs text-slate-600 lg:ml-0" :title="tunnel.status === 'running' ? tunnel.url : tunnel.error">
         <span class="size-2 shrink-0 rounded-full" :class="!tunnel.enabled ? 'bg-slate-400' : tunnel.status === 'running' ? 'bg-brand-500' : tunnel.status === 'error' ? 'bg-red-500' : 'animate-pulse bg-slate-400'" />
