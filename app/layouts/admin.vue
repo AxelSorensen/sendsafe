@@ -136,11 +136,18 @@ provide('signOut', logout)
   <!-- Locked: just the padlock and one input. The padlock clicks shut each time this screen appears. -->
   <main v-if="isLocked" class="lock-screen fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-gradient-to-br from-brand-50 to-brand-100 px-4 py-10">
     <div class="w-full max-w-xs text-center">
-      <div class="lock-icon mx-auto grid size-24 place-items-center rounded-full bg-white text-brand-600 shadow-sm ring-1 ring-brand-100">
-        <svg viewBox="0 0 24 24" class="size-12 overflow-visible" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path class="shackle" d="M8 11V8a4 4 0 118 0v3" />
-          <rect class="lock-body" x="5" y="11" width="14" height="9" rx="2" fill="currentColor" fill-opacity=".25" />
+      <!-- The SendSafe icon, with a small padlock badge that clicks shut each time this screen appears. -->
+      <div class="lock-icon relative mx-auto size-24">
+        <svg viewBox="100 100 824 824" class="size-24 drop-shadow-sm" aria-hidden="true">
+          <rect x="100" y="100" width="824" height="824" rx="185" fill="#2563eb" />
+          <path d="M512 232a190 190 0 0 1 112 344l44 218a30 30 0 0 1-30 36H386a30 30 0 0 1-30-36l44-218A190 190 0 0 1 512 232z" fill="#fff" transform="translate(512 512) scale(0.76) translate(-512 -531)" />
         </svg>
+        <span class="absolute -bottom-2 -right-2 grid size-9 place-items-center rounded-full bg-white text-brand-600 shadow ring-1 ring-brand-100">
+          <svg viewBox="0 0 24 24" class="size-5 overflow-visible" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path class="shackle" d="M8 11V8a4 4 0 118 0v3" />
+            <rect class="lock-body" x="5" y="11" width="14" height="9" rx="2" fill="currentColor" fill-opacity=".25" />
+          </svg>
+        </span>
       </div>
       <form class="lock-card mt-8 space-y-3" @submit.prevent="unlock">
         <input v-if="showPw" id="unlock-pw" v-model="unlockPw" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password" class="field text-center" required>
