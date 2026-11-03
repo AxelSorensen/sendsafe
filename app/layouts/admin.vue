@@ -97,7 +97,7 @@ async function logout() {
     <Onboarding v-if="showTour && privateKey" @done="finishTour" />
     <main class="flex min-h-0 min-w-0 flex-1 flex-col p-4 lg:p-6" :class="!isSettings && 'pb-20 lg:pb-6'">
       <div class="flex min-h-0 flex-1 flex-col gap-6">
-        <NuxtLink v-if="isSettings" to="/admin" class="btn-ghost shrink-0 self-start !px-3">
+        <NuxtLink v-if="isSettings" to="/admin" class="btn-ghost shrink-0 self-start !bg-slate-100 !px-3 hover:!bg-slate-200">
           <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
           Back to inbox
         </NuxtLink>
