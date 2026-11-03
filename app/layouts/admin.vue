@@ -59,6 +59,8 @@ async function logout() {
   signingOut.value = true
   await Promise.all([$fetch('/api/auth/logout', { method: 'POST' }).catch(() => {}), new Promise(r => setTimeout(r, 900))])
   lock()
+  // Signing out means a clean login screen: forget the remembered email too.
+  try { localStorage.removeItem('sendsafe-last-email') } catch { /* storage unavailable */ }
   location.assign('/login')
 }
 provide('signOut', logout)
