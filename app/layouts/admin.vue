@@ -36,7 +36,7 @@ async function logout() {
 </script>
 
 <template>
-  <AuthShell v-if="!privateKey" title="Vault locked" subtitle="Enter your password to unlock your documents.">
+  <AuthShell v-if="!privateKey" title="Safe locked" subtitle="Enter your password to unlock your documents.">
     <form class="space-y-4" @submit.prevent="unlock">
       <div>
         <label class="label" for="unlock-pw">Password</label>

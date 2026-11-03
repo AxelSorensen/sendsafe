@@ -56,7 +56,7 @@ async function verify() {
 
 <template>
   <AuthShell
-    :title="totp ? 'Set up two-factor' : 'Create your vault'"
+    :title="totp ? 'Set up two-factor' : 'Create your safe'"
     :subtitle="totp ? 'Scan the QR code with an authenticator app, then enter the 6-digit code.' : 'Your password protects the key that decrypts every file. If you lose it, files cannot be recovered.'"
   >
     <form v-if="!totp" class="space-y-4" @submit.prevent="create">
@@ -81,7 +81,7 @@ async function verify() {
         <input v-model="confirm" type="password" autocomplete="new-password" class="field" required>
       </div>
       <p v-if="error" class="alert-error">{{ error }}</p>
-      <button :disabled="busy" class="btn w-full">{{ busy ? 'Generating keys…' : 'Create vault' }}</button>
+      <button :disabled="busy" class="btn w-full">{{ busy ? 'Generating keys…' : 'Create safe' }}</button>
     </form>
 
     <form v-else class="space-y-4" @submit.prevent="verify">
