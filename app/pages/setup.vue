@@ -4,7 +4,7 @@ const status = await $fetch<{ setup: boolean, needsSetupToken: boolean }>('/api/
 const hasAccounts = ((await $fetch<{ accounts: unknown[] }>('/api/profiles')).accounts.length) > 0
 if (status.setup) await navigateTo('/login', { replace: true })
 
-const displayName = ref('')
+const email = ref('')
 const password = ref('')
 const confirm = ref('')
 const setupToken = ref('')
@@ -29,7 +29,7 @@ let created: { kdfSalt: string, wrappedPrivateKey: string, wrapIv: string } | nu
 
 async function create() {
   error.value = ''
-  if (!displayName.value.trim()) return (error.value = 'Please enter your name.')
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) return (error.value = 'Please enter a valid email address.')
   if (password.value.length < 12) return (error.value = 'Use at least 12 characters.')
   if (password.value !== confirm.value) return (error.value = 'Passwords do not match.')
   busy.value = true
@@ -38,7 +38,7 @@ async function create() {
     created = v
     totp.value = await $fetch<{ secret: string, qr: string }>('/api/auth/setup', {
       method: 'POST',
-      body: { ...v, setupToken: setupToken.value, displayName: displayName.value.trim() }
+      body: { ...v, setupToken: setupToken.value, email: email.value.trim() }
     })
   } catch (e: any) {
     error.value = e?.data?.statusMessage || 'Setup failed.'
@@ -83,9 +83,9 @@ async function verify() {
         <input v-model="setupToken" type="password" placeholder="From server environment" class="field">
       </div>
       <div>
-        <label class="label" for="su-name">Your name</label>
-        <input id="su-name" v-model="displayName" type="text" maxlength="80" autocomplete="name" placeholder="e.g. Jane Smith" class="field" required>
-        <p class="mt-1 text-xs text-slate-500">Shown in your authenticator app and to people who open your link.</p>
+        <label class="label" for="su-email">Email</label>
+        <input id="su-email" v-model="email" type="email" maxlength="120" autocomplete="email" placeholder="you@example.com" class="field" required>
+        <p class="mt-1 text-xs text-slate-500">Names your entry in the authenticator app. It is not shared with anyone.</p>
       </div>
       <div>
         <label class="label">Password</label>

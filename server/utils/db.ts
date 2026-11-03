@@ -74,6 +74,7 @@ export function useDb(id: string = currentProfile()): DatabaseSync {
     db.exec('CREATE INDEX IF NOT EXISTS files_link ON files(link_id); CREATE INDEX IF NOT EXISTS files_created ON files(created_at); CREATE INDEX IF NOT EXISTS sessions_exp ON sessions(expires_at)')
     for (const col of [
       "display_name TEXT NOT NULL DEFAULT ''",
+      "email TEXT NOT NULL DEFAULT ''",
       'require_totp INTEGER NOT NULL DEFAULT 1',
       'session_hours INTEGER NOT NULL DEFAULT 12',
       'sharing_enabled INTEGER NOT NULL DEFAULT 1',

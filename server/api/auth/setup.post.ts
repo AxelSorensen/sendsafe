@@ -15,14 +15,14 @@ export default defineEventHandler(async (event) => {
   }
 
   const secret = generateTotpSecret()
-  const displayName = typeof body?.displayName === 'string' ? body.displayName.trim().slice(0, 80) : ''
-  if (!displayName) throw createError({ statusCode: 400, statusMessage: 'Please enter your name.' })
+  const email = typeof body?.email === 'string' ? body.email.trim().slice(0, 120) : ''
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw createError({ statusCode: 400, statusMessage: 'Please enter a valid email address.' })
   useDb().prepare(
-    `INSERT INTO owner (id, auth_hash, kdf_salt, public_key, wrapped_private_key, wrap_iv, totp_secret, created_at, display_name)
+    `INSERT INTO owner (id, auth_hash, kdf_salt, public_key, wrapped_private_key, wrap_iv, totp_secret, created_at, email)
      VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(hashSecret(authSecret), kdfSalt, publicKey, wrappedPrivateKey, wrapIv, secret, Date.now(), displayName)
+  ).run(hashSecret(authSecret), kdfSalt, publicKey, wrappedPrivateKey, wrapIv, secret, Date.now(), email)
 
   createSession(event, false)
-  const uri = otpauthUri(secret, displayName)
+  const uri = otpauthUri(secret, email)
   return { secret, uri, qr: await QRCode.toDataURL(uri, { margin: 1, width: 240 }) }
 })
