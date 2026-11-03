@@ -31,7 +31,7 @@ const countdown = ref(0) // seconds left in the warning; 0 = no warning showing
 let lastActive = Date.now()
 let idleTimer: ReturnType<typeof setInterval> | undefined
 let warnTimer: ReturnType<typeof setInterval> | undefined
-const WARN_SECONDS = 5
+const WARN_SECONDS = 30
 const loadAutoLock = async () => {
   try { autoLockMin.value = (await $fetch<{ autoLockMinutes: number }>('/api/settings')).autoLockMinutes } catch { /* keep current */ }
 }
@@ -52,7 +52,11 @@ onMounted(() => {
   ACTIVITY.forEach(e => window.addEventListener(e, markActive, { passive: true }))
   idleTimer = setInterval(() => {
     if (!privateKey.value || !autoLockMin.value || countdown.value) return
-    if (Date.now() - lastActive >= autoLockMin.value * 60_000 - WARN_SECONDS * 1000) startWarning()
+    // `sendsafe-idle-test` (seconds) is a testing shortcut: warn after that much idle time instead of the real delay.
+    let test = 0
+    try { test = Number(localStorage.getItem('sendsafe-idle-test')) || 0 } catch { /* storage unavailable */ }
+    const idleMs = test ? test * 1000 : autoLockMin.value * 60_000 - WARN_SECONDS * 1000
+    if (Date.now() - lastActive >= Math.max(idleMs, 0)) startWarning()
   }, 1000)
 })
 onBeforeUnmount(() => {
