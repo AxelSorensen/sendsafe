@@ -11,7 +11,7 @@ export default defineNuxtConfig({
     head: {
       htmlAttrs: { lang: 'en' },
       // Apply the saved theme before the first paint so there is no white flash in dark mode.
-      script: [{ innerHTML: "try{var t=localStorage.getItem('sendsafe-theme')||'system';if(t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}", tagPosition: 'head' }],
+      script: [{ innerHTML: "try{var t=localStorage.getItem('sendsafe-theme')||'system';if(window.__TAURI_INTERNALS__&&(t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches)))document.documentElement.classList.add('dark')}catch(e){}", tagPosition: 'head' }],
       title: 'SendSafe',
       viewport: 'width=device-width, initial-scale=1, viewport-fit=cover',
       meta: [

@@ -4,7 +4,9 @@ const KEY = 'sendsafe-theme'
 const theme = ref<Theme>('system')
 
 function apply() {
-  const dark = theme.value === 'dark' || (theme.value === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  // Dark mode belongs to the desktop app only; web pages (upload links) always stay light.
+  const inApp = !!(window as any).__TAURI_INTERNALS__
+  const dark = inApp && (theme.value === 'dark' || (theme.value === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches))
   document.documentElement.classList.toggle('dark', dark)
 }
 

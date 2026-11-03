@@ -47,6 +47,15 @@
           "y": 190
         }
       }
+    },
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEIyQzU1NkM4NzgwOEZDRUYKUldUdi9BaDR5RmJGc29uVW52QkFLQnFveTBRajQ4SmhWR3hud2Q2aFEvV2t5YTk2ZUlnTDBNUFAK",
+      "endpoints": [
+        "https://github.com/AxelSorensen/sendsafe/releases/latest/download/latest.json"
+      ]
     }
   }
 }
