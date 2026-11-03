@@ -2,13 +2,26 @@
 useHead({ title: 'Settings | SendSafe' })
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
-const form = reactive({ displayName: '', requireTotp: true, sessionHours: 12 })
+const form = reactive({ displayName: '', requireTotp: true, sessionMinutes: 720 })
 const saving = ref(false)
 const saved = ref(false)
 const error = ref('')
 
-const loaded = await $fetch<{ displayName: string, requireTotp: boolean, sessionHours: number }>('/api/settings')
+const loaded = await $fetch<{ displayName: string, requireTotp: boolean, sessionMinutes: number }>('/api/settings')
 Object.assign(form, loaded)
+// "Stay logged in for": three quick choices, or a custom length in minutes, hours or days.
+const PRESETS = [1, 5, 30]
+const UNIT_MIN = { minutes: 1, hours: 60, days: 1440 } as const
+type Unit = keyof typeof UNIT_MIN
+const mins = form.sessionMinutes
+const mode = ref(PRESETS.includes(mins) ? String(mins) : 'custom')
+const unit = ref<Unit>(mins % 1440 === 0 ? 'days' : mins % 60 === 0 ? 'hours' : 'minutes')
+const customVal = ref(Math.max(1, Math.round(mins / UNIT_MIN[unit.value])))
+watch([mode, customVal, unit], () => {
+  form.sessionMinutes = mode.value === 'custom'
+    ? Math.min(Math.max(Math.floor(Number(customVal.value) || 1), 1) * UNIT_MIN[unit.value], 60 * 24 * 30)
+    : Number(mode.value)
+})
 // Save is only enabled once something differs from what is stored.
 const snapshot = ref(JSON.stringify(form))
 const dirty = computed(() => JSON.stringify(form) !== snapshot.value)
@@ -73,9 +86,21 @@ async function toggleSharing() {
 
     <div>
       <label class="label" for="st-session">Stay logged in for</label>
-      <div class="relative">
-        <input id="st-session" v-model.number="form.sessionHours" type="number" min="1" max="720" class="field pr-16">
-        <span class="pointer-events-none absolute inset-y-0 right-3 grid items-center text-sm text-slate-400">hours</span>
+      <div class="flex flex-wrap gap-2">
+        <select id="st-session" v-model="mode" class="field w-auto min-w-40">
+          <option value="1">1 minute</option>
+          <option value="5">5 minutes</option>
+          <option value="30">30 minutes</option>
+          <option value="custom">Custom</option>
+        </select>
+        <template v-if="mode === 'custom'">
+          <input v-model.number="customVal" type="number" min="1" class="field w-24" aria-label="Custom length">
+          <select v-model="unit" class="field w-auto" aria-label="Unit">
+            <option value="minutes">minutes</option>
+            <option value="hours">hours</option>
+            <option value="days">days</option>
+          </select>
+        </template>
       </div>
       <p class="mt-1 text-xs text-slate-500">Applies from your next login.</p>
     </div>
@@ -92,9 +117,14 @@ async function toggleSharing() {
     </div>
 
     <p v-if="error" class="alert-error">{{ error }}</p>
-    <div class="flex items-center gap-3">
+    <div class="flex items-center justify-end gap-3">
+      <Transition name="saved">
+        <span v-if="saved" class="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1.5 text-sm font-medium text-brand-700" role="status">
+          <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>
+          Settings saved
+        </span>
+      </Transition>
       <button class="btn" :disabled="saving || !dirty">{{ saving ? 'Saving…' : 'Save settings' }}</button>
-      <span v-if="saved" class="text-sm text-brand-600">Saved</span>
     </div>
   </form>
 

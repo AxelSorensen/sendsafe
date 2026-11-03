@@ -83,6 +83,11 @@ export function useDb(id: string = currentProfile()): DatabaseSync {
     ]) {
       try { db.exec(`ALTER TABLE owner ADD COLUMN ${col}`) } catch { /* already migrated */ }
     }
+    // Session length is kept in minutes now (was hours). Convert existing values once, when the column is first added.
+    try {
+      db.exec('ALTER TABLE owner ADD COLUMN session_minutes INTEGER NOT NULL DEFAULT 720')
+      db.exec('UPDATE owner SET session_minutes = session_hours * 60')
+    } catch { /* already migrated */ }
   }
   return db
 }

@@ -4,7 +4,16 @@ const unlockPw = ref('')
 const error = ref('')
 const { tunnel, init: initTunnel, retry: retryTunnel } = useTunnel()
 const showTour = ref(false)
+// When the login time runs out, lock the screen (the unlocked key only lives in this window's memory).
+let expiryTimer: ReturnType<typeof setInterval> | undefined
 onMounted(async () => {
+  expiryTimer = setInterval(async () => {
+    if (!privateKey.value) return
+    try {
+      const st = await $fetch<{ authed: boolean }>('/api/status')
+      if (!st.authed) { lock(); await navigateTo('/login') }
+    } catch { /* offline: try again next tick */ }
+  }, 5000)
   initTunnel()
   try { showTour.value = !(await $fetch<{ onboarded: boolean }>('/api/settings')).onboarded } catch {}
 })
@@ -12,6 +21,7 @@ async function finishTour() {
   showTour.value = false
   await $fetch('/api/settings', { method: 'PATCH', body: { onboarded: true } }).catch(() => {})
 }
+onBeforeUnmount(() => clearInterval(expiryTimer))
 provide('openTour', () => (showTour.value = true))
 // Planned sections, shown greyed out until they exist.
 const soon = [
