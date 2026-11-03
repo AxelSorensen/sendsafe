@@ -21,6 +21,8 @@ const strength = computed(() => {
   return { level: 2, label: 'Weak', missing, bar: 'bg-amber-500', text: 'text-amber-600' }
 })
 const totp = ref<{ secret: string, qr: string } | null>(null)
+const { privateKey } = useVault()
+let created: { kdfSalt: string, wrappedPrivateKey: string, wrapIv: string } | null = null
 
 async function create() {
   error.value = ''
@@ -29,6 +31,7 @@ async function create() {
   busy.value = true
   try {
     const v = await createOwnerVault(password.value)
+    created = v
     totp.value = await $fetch<{ secret: string, qr: string }>('/api/auth/setup', {
       method: 'POST',
       body: { ...v, setupToken: setupToken.value }
@@ -45,6 +48,17 @@ async function verify() {
   busy.value = true
   try {
     await $fetch('/api/auth/setup-totp', { method: 'POST', body: { code: code.value } })
+    // The password and the 2FA code were just proven, so open the safe right away instead of asking for them again.
+    if (created) {
+      try {
+        const { wrapKey } = await deriveKeys(password.value, created.kdfSalt)
+        privateKey.value = await unlockPrivateKey(wrapKey, created.wrappedPrivateKey, created.wrapIv)
+        password.value = ''
+        confirm.value = ''
+        await navigateTo('/admin')
+        return
+      } catch { /* fall back to the normal login */ }
+    }
     await navigateTo('/login')
   } catch (e: any) {
     error.value = e?.data?.statusMessage || 'Invalid code.'
