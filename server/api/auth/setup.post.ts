@@ -4,7 +4,7 @@ export default defineEventHandler(async (event) => {
   rateLimit(`setup:${clientIp(event)}`, 10, 60 * 60 * 1000)
   if (getOwner()) throw createError({ statusCode: 409, statusMessage: 'Already set up' })
 
-  const required = process.env.SAFEDROP_SETUP_TOKEN
+  const required = process.env.SENDSAFE_SETUP_TOKEN
   const body = await readBody(event)
   if (required && !safeEqual(String(body?.setupToken ?? ''), required)) {
     throw createError({ statusCode: 403, statusMessage: 'Bad setup token' })

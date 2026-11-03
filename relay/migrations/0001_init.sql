@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS links (
+  id TEXT PRIMARY KEY,
+  token_hash TEXT NOT NULL UNIQUE,
+  label TEXT NOT NULL,
+  expires_at INTEGER NOT NULL,
+  max_files INTEGER NOT NULL,
+  max_bytes INTEGER NOT NULL,
+  revoked INTEGER NOT NULL DEFAULT 0,
+  local_used INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS files (
+  id TEXT PRIMARY KEY,
+  link_id TEXT NOT NULL,
+  enc TEXT NOT NULL,
+  size INTEGER NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS files_link ON files(link_id);
+CREATE INDEX IF NOT EXISTS files_created ON files(created_at);

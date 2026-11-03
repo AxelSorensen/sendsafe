@@ -44,6 +44,8 @@ export interface OwnerRow {
   require_totp: number
   sharing_enabled: number
   onboarded: number
+  relay_url: string
+  relay_token: string
   session_hours: number
   created_at: number
 }
@@ -103,5 +105,5 @@ export function rateLimit(key: string, max: number, windowMs: number) {
 }
 
 export function clientIp(event: H3Event): string {
-  return getRequestIP(event, { xForwardedFor: process.env.SAFEDROP_TRUST_PROXY === '1' }) || 'unknown'
+  return getRequestIP(event, { xForwardedFor: process.env.SENDSAFE_TRUST_PROXY === '1' }) || 'unknown'
 }

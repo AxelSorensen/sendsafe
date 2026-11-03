@@ -16,7 +16,7 @@ const s = reactive({ hours: 720, maxFiles: 100, maxFileMb: 100 })
 const viewingId = ref('')
 // Read state (like mail): ids the user has opened or downloaded, kept in this browser.
 const seen = ref<string[]>([])
-const SEEN_KEY = 'safedrop-seen'
+const SEEN_KEY = 'sendsafe-seen'
 function markSeen(id: string) {
   if (seen.value.includes(id)) return
   seen.value = [...seen.value, id]
@@ -24,7 +24,7 @@ function markSeen(id: string) {
 }
 // "New" tag: files first shown to you just now. Cleared by any click/key, by leaving the page, or when the window loses focus.
 const fresh = ref<string[]>([])
-const KNOWN_KEY = 'safedrop-known'
+const KNOWN_KEY = 'sendsafe-known'
 let known: Set<string> | null = null
 function trackNew(ids: string[]) {
   if (!import.meta.client) return
@@ -208,13 +208,13 @@ watch(privateKey, () => refresh())
       <div class="min-w-0">
         <h1 class="text-base font-semibold">Your sharing link</h1>
         <p class="mt-1 text-sm text-slate-600">
-          <template v-if="!tunnel.enabled">The sharing server is off. Turn it on in <NuxtLink to="/admin/settings" class="font-medium text-brand-700 underline">Settings</NuxtLink> for your links to work or to create a link.</template>
+          <template v-if="!tunnel.enabled">The sharing server is off. Turn it on in <NuxtLink to="/admin/settings#sharing" class="font-medium text-brand-700 underline">Settings</NuxtLink> for your links to work or to create a link.</template>
           <template v-else-if="active">Anyone with this link can send you files. Expires {{ fmt(active.expires_at) }}.</template>
           <template v-else>Create a link, send it to someone, and their files appear below.</template>
         </p>
       </div>
       <div class="flex shrink-0 items-center gap-2">
-        <NuxtLink v-if="!tunnel.enabled" to="/admin/settings" class="btn">Turn on in Settings</NuxtLink>
+        <NuxtLink v-if="!tunnel.enabled" to="/admin/settings#sharing" class="btn">Turn on in Settings</NuxtLink>
         <template v-else-if="active">
           <button type="button" class="mr-2 inline-flex items-center gap-1.5 text-sm font-medium text-brand-700 hover:underline" @click="openSettings">
             <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z" /></svg>

@@ -1,0 +1,15 @@
+{
+  "name": "sendsafe-relay",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-10-01",
+  "workers_dev": true,
+  // The built web app (copied here by setup.mjs). The Worker decides which paths are reachable.
+  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": true },
+  // One Durable Object per owner holds that owner's open connection so we can push "new file" instead of being polled.
+  "durable_objects": { "bindings": [{ "name": "HUB", "class_name": "OwnerHub" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["OwnerHub"] }],
+  "r2_buckets": [{ "binding": "BUCKET", "bucket_name": "sendsafe-files" }],
+  "d1_databases": [{ "binding": "DB", "database_name": "sendsafe-relay", "database_id": "de43f69e-39af-44ae-b9d1-849f0b28cc0a", "migrations_dir": "migrations" }],
+  // Encrypted files nobody collected in 30 days are deleted (checked daily).
+  "triggers": { "crons": ["17 3 * * *"] }
+}

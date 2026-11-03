@@ -4,28 +4,62 @@ const token = String(route.params.token)
 
 interface Info { label: string, ownerName: string, publicKey: string, filesLeft: number, maxFileBytes: number, expiresAt: number, now: number }
 const info = ref<Info | null>(null)
-const invalid = ref(false)
+// Server time minus device time, so a wrong device clock cannot break the code match.
+const offset = ref(0)
 type Item = { name: string, size: number, file: File, state: 'pending' | 'encrypting' | 'uploading' | 'done' | 'error', msg: string, pct: number }
 const items = ref<Item[]>([])
 const phase = ref<'form' | 'result'>('form')
 const dragging = ref(false)
 
-try {
-  info.value = await $fetch<Info>(`/api/upload/${token}`)
-} catch {
-  invalid.value = true
+// Link state. `closed` = recipient switched sharing off, `offline` = no connection to them, `invalid` = revoked/expired.
+type Status = 'ok' | 'closed' | 'offline' | 'invalid'
+const status = ref<Status>('ok')
+const checking = ref(false)
+
+async function loadInfo(): Promise<Status | 'keep'> {
+  try {
+    const r = await fetch(`/api/upload/${token}`, { cache: 'no-store' })
+    if (r.ok) {
+      const i = await r.json() as Info
+      info.value = i
+      offset.value = i.now - Date.now()
+      return 'ok'
+    }
+    if (r.status === 503) return 'closed'
+    if (r.status === 404) return 'invalid'
+    if (r.status === 429) return 'keep'
+    return 'offline' // 5xx from the tunnel/edge: the recipient is not reachable
+  } catch {
+    return 'offline'
+  }
 }
+
+let fails = 0
+async function check(initial = false) {
+  if (checking.value || (!initial && (document.hidden || sending.value))) return
+  checking.value = true
+  try {
+    const s = await loadInfo()
+    if (s === 'keep') return
+    if (s === 'offline') {
+      // One failed poll is noise; two in a row means the connection is really gone.
+      if (!initial && status.value === 'ok' && ++fails < 2) return
+    } else fails = 0
+    status.value = s
+  } finally {
+    checking.value = false
+  }
+}
+
 
 const mb = (n: number) => Math.round(n / 1024 / 1024)
 const fmtSize = (n: number) => n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.max(Math.round(n / 1024), 1)} KB`
 
 const staged = ref<File[]>([])
-const barShown = computed(() => phase.value === 'result' || staged.value.length > 0)
+const barShown = computed(() => status.value === 'ok' && (phase.value === 'result' || staged.value.length > 0))
 // Room reserved under the page for the fixed bottom bar (list of up to 3 rows + button), phones only.
 const barSpace = computed(() => phase.value === 'result' ? '8rem' : `${9 + Math.min(staged.value.length, 3) * 2.75}rem`)
 const sending = ref(false)
-// Server time minus device time, so a wrong device clock cannot break the code match.
-const offset = ref(info.value ? info.value.now - Date.now() : 0)
 const expiresText = computed(() => info.value ? new Date(info.value.expiresAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '')
 const slotsLeft = computed(() => (info.value?.filesLeft ?? 0) - staged.value.length)
 
@@ -114,6 +148,24 @@ const failedItems = computed(() => items.value.filter(i => i.state === 'error'))
 const busy = computed(() => items.value.some(i => ['pending', 'encrypting', 'uploading'].includes(i.state)))
 const totalSize = computed(() => doneItems.value.reduce((n, i) => n + i.size, 0))
 
+await check(true)
+
+// Keep watching the link while the page is open: if the recipient switches sharing off (or the connection drops) this page notices.
+let timer: ReturnType<typeof setInterval> | undefined
+const recheck = () => { check() }
+onMounted(() => {
+  timer = setInterval(recheck, 6000)
+  document.addEventListener('visibilitychange', recheck)
+  window.addEventListener('online', recheck)
+  window.addEventListener('focus', recheck)
+})
+onBeforeUnmount(() => {
+  clearInterval(timer)
+  document.removeEventListener('visibilitychange', recheck)
+  window.removeEventListener('online', recheck)
+  window.removeEventListener('focus', recheck)
+})
+
 function onPick(e: Event) {
   const input = e.target as HTMLInputElement
   if (input.files) stage(input.files)
@@ -123,19 +175,23 @@ function onDrop(e: DragEvent) {
   dragging.value = false
   if (e.dataTransfer?.files) stage(e.dataTransfer.files)
 }
+
+// Latest installers (built by .github/workflows/release.yml). The GitHub repo must be public for visitors to download.
+const RELEASES = 'https://github.com/AxelSorensen/sendsafe/releases/latest'
+const DL = `${RELEASES}/download`
+const ua = import.meta.client ? navigator.userAgent : ''
+const isMac = /Mac/.test(ua) && !/iPhone|iPad/.test(ua)
+const isWin = /Windows/.test(ua)
+// Direct file downloads (fixed names are uploaded by the release workflow). Unknown systems get the releases page.
+const INSTALL_URL = isMac ? `${DL}/SendSafe-mac-arm.dmg` : isWin ? `${DL}/SendSafe-windows.exe` : RELEASES
+const INTEL_URL = `${DL}/SendSafe-mac-intel.dmg`
 </script>
 
 <template>
   <main class="mx-auto flex min-h-dvh max-w-xl flex-col justify-start px-4 py-6 sm:justify-center sm:py-12" :class="barShown && 'pb-[var(--bar)] sm:pb-12'" :style="{ '--bar': barSpace }">
     <div class="mb-5 flex justify-center sm:mb-8"><BrandLogo /></div>
 
-    <div v-if="invalid" class="card p-8 text-center">
-      <div class="mx-auto mb-4 grid size-12 place-items-center rounded-full bg-slate-100 text-slate-400">
-        <svg viewBox="0 0 24 24" class="size-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9" /><path d="M5.6 5.6l12.8 12.8" /></svg>
-      </div>
-      <h1 class="text-lg font-semibold">This link is invalid or expired</h1>
-      <p class="mt-1.5 text-sm text-slate-500">Ask the sender for a new one.</p>
-    </div>
+    <LinkStatus v-if="status !== 'ok' || !info" :kind="status === 'ok' ? 'invalid' : status" :checking="checking" @retry="check()" />
 
     <div v-else-if="info && phase === 'result'" class="card p-5 sm:p-8">
       <div class="text-center">
@@ -153,7 +209,7 @@ function onDrop(e: DragEvent) {
         <p class="mt-1.5 min-h-10 text-sm text-slate-500">
           <template v-if="busy">Keep this page open until it finishes.</template>
           <template v-else-if="failedItems.length">Some files did not go through. They were <strong>not</strong> delivered.</template>
-          <template v-else>{{ doneItems.length }} file{{ doneItems.length > 1 ? 's' : '' }} ({{ fmtSize(totalSize) }}) confirmed received by {{ info.ownerName || info.label }}.</template>
+          <template v-else>{{ doneItems.length }} file{{ doneItems.length > 1 ? 's' : '' }} ({{ fmtSize(totalSize) }}) safely delivered to {{ info.ownerName || info.label }}.</template>
         </p>
       </div>
 
@@ -238,6 +294,17 @@ function onDrop(e: DragEvent) {
         <svg viewBox="0 0 24 24" class="mt-0.5 size-4 shrink-0 text-brand-600" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 118 0v3" /></svg>
         Files are encrypted in your browser before they leave your device. Only the recipient can open them.
       </p>
+    </div>
+
+    <div v-if="info && status === 'ok'" class="mt-4 hidden items-center justify-between gap-4 rounded-2xl border border-brand-100 bg-brand-50/60 px-5 py-4 sm:flex">
+      <div>
+        <p class="text-sm font-semibold text-slate-900">Want to send and receive files safely too?</p>
+        <p class="mt-0.5 text-xs text-slate-500">Get SendSafe for your computer. Free, end-to-end encrypted.</p>
+      </div>
+      <div class="shrink-0 text-center">
+        <a :href="INSTALL_URL" class="btn !py-2 !text-sm">Install SendSafe</a>
+        <a v-if="isMac" :href="INTEL_URL" class="mt-1 block text-[11px] text-slate-500 hover:underline">Intel Mac? Download this one</a>
+      </div>
     </div>
   </main>
 </template>

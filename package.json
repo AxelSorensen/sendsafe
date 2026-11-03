@@ -1,5 +1,5 @@
 {
-  "name": "safedrop",
+  "name": "sendsafe",
   "type": "module",
   "private": true,
   "scripts": {
@@ -28,5 +28,8 @@
     "tailwindcss": "4.3.4",
     "typescript": "6.0.3",
     "vue-tsc": "3.3.14"
+  },
+  "engines": {
+    "node": ">=22.5"
   }
 }

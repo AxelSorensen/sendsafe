@@ -22,3 +22,11 @@ logs
 .env
 .env.*
 !.env.example
+
+# desktop shell: dist holds its splash page, keep it
+!desktop/dist
+desktop/node_modules
+desktop/src-tauri/target
+desktop/src-tauri/binaries
+desktop/src-tauri/resources
+desktop/src-tauri/gen

@@ -1,0 +1,14 @@
+{
+  "name": "sendsafe-relay",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "setup": "node setup.mjs",
+    "redeploy": "node setup.mjs --deploy-only",
+    "dev": "wrangler dev --local"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20251001.0",
+    "wrangler": "^4"
+  }
+}

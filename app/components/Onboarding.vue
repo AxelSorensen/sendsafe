@@ -5,8 +5,8 @@ const step = ref(0)
 const steps = [
   { title: 'Share your SendSafe link', body: 'Copy your link from the Inbox page and send it to the person who has files for you, by text, chat or email. Only the link goes out, never the files. Keep SendSafe open and the sharing server on so the link works.' },
   { title: 'They upload through the link', body: 'They open the link, pick their files and press send. Everything is encrypted in their browser before it leaves their device. If they want to be sure it is really you, they can call and compare the verification code in Settings.' },
-  { title: 'It shows up in your inbox', body: 'New files land in your Inbox and you get a notification. Open or download them any time. Nothing is ever emailed or left in a cloud folder.' },
-  { title: 'It stays only on your computer', body: 'Files are not kept on any server and not in anyone’s mail. They are stored encrypted on this computer, and the connection only relays scrambled data it cannot read.' },
+  { title: 'It shows up in your inbox', body: 'New files land in your Inbox and you get a notification. Open or download them any time. Nothing is ever emailed or left in a shared cloud folder.' },
+  { title: 'It stays only on your computer', body: 'Files are never sent by email or left in a shared folder. If you use the Cloudflare relay, they wait there encrypted and unreadable until this app downloads them, then they are deleted. After that they live only on this computer.' },
   { title: 'Safe even if your laptop is stolen', body: 'Your files can only be opened with your password and your authenticator code. Without them, whoever has the laptop sees nothing readable. We cannot reset your password, so keep it somewhere safe.' }
 ]
 const last = computed(() => step.value === steps.length - 1)
@@ -54,8 +54,8 @@ const last = computed(() => step.value === steps.length - 1)
             <g class="text-slate-300"><path d="M44 70a14 14 0 012-27 18 18 0 0134 3 12 12 0 012 24z" fill="white" /><rect x="198" y="44" width="48" height="34" rx="5" fill="white" /><path d="M198 48l24 17 24-17" /></g>
             <g class="text-red-400"><path d="M36 40l56 40M36 80l56-40" opacity="0" /><circle cx="64" cy="58" r="22" fill="none" stroke-width="2.5" /><path d="M48 74l32-32" stroke-width="2.5" /><circle cx="222" cy="58" r="30" fill="none" stroke-width="2.5" /><path d="M201 79l42-42" stroke-width="2.5" /></g>
             <g class="pop"><rect x="118" y="30" width="64" height="44" rx="6" fill="white" /><path d="M108 84h84" /><rect x="138" y="44" width="24" height="16" rx="3" fill="currentColor" stroke="none" /><path d="M143 44v-3a7 7 0 0114 0v3" /></g>
-            <text x="64" y="106" class="fill-slate-500" font-size="8" stroke="none" text-anchor="middle">No cloud</text>
-            <text x="150" y="106" class="fill-slate-500" font-size="8" stroke="none" text-anchor="middle">Only here</text>
+            <text x="64" y="106" class="fill-slate-500" font-size="8" stroke="none" text-anchor="middle">No cloud drive</text>
+            <text x="150" y="106" class="fill-slate-500" font-size="8" stroke="none" text-anchor="middle">Ends up here</text>
             <text x="222" y="106" class="fill-slate-500" font-size="8" stroke="none" text-anchor="middle">No email</text>
           </svg>
           <!-- 4: stolen laptop stays locked -->

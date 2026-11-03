@@ -1,0 +1,71 @@
+name: Release desktop app
+
+# Push a tag like v0.1.0 (or run manually) to build installers for macOS (Apple silicon + Intel) and Windows.
+# Needs the repo secret SENDSAFE_RELAY_URL (the address printed by `pnpm run setup` in relay/).
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14      # Apple silicon
+            args: ''
+          - os: macos-13      # Intel
+            args: ''
+          - os: windows-latest
+            args: ''
+    runs-on: ${{ matrix.os }}
+    env:
+      SENDSAFE_RELAY_URL: ${{ secrets.SENDSAFE_RELAY_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 10 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Check relay URL
+        shell: bash
+        run: test -n "$SENDSAFE_RELAY_URL" || (echo "Secret SENDSAFE_RELAY_URL is not set" && exit 1)
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
+        working-directory: desktop
+      - name: Build web app and stage the bundled Node runtime
+        run: node scripts/prepare.mjs
+        working-directory: desktop
+      - uses: tauri-apps/tauri-action@v0
+        id: tauri
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: desktop
+          tagName: ${{ github.ref_name }}
+          releaseName: 'SendSafe ${{ github.ref_name }}'
+          releaseDraft: false
+          args: ${{ matrix.args }}
+      # The upload page links to fixed file names, so add copies without the version number.
+      - name: Upload fixed-name installers
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PATHS: ${{ steps.tauri.outputs.artifactPaths }}
+          OSNAME: ${{ matrix.os }}
+        run: |
+          mkdir -p fixed
+          echo "$PATHS" | tr -d '[]"' | tr ',' '\n' | while read -r p; do
+            [ -z "$p" ] && continue
+            case "$OSNAME" in
+              macos-14) [[ "$p" == *.dmg ]] && cp "$p" fixed/SendSafe-mac-arm.dmg ;;
+              macos-13) [[ "$p" == *.dmg ]] && cp "$p" fixed/SendSafe-mac-intel.dmg ;;
+              windows-latest) [[ "$p" == *-setup.exe ]] && cp "$p" fixed/SendSafe-windows.exe ;;
+            esac
+          done
+          ls fixed
+          gh release upload "${{ github.ref_name }}" fixed/* --clobber

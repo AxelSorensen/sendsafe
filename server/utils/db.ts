@@ -1,8 +1,8 @@
 import { DatabaseSync } from 'node:sqlite'
-import { mkdirSync } from 'node:fs'
+import { existsSync, mkdirSync, renameSync } from 'node:fs'
 import { join } from 'node:path'
 
-export const DATA_DIR = process.env.SAFEDROP_DATA_DIR || join(process.cwd(), '.data', 'safedrop')
+export const DATA_DIR = process.env.SENDSAFE_DATA_DIR || join(process.cwd(), '.data', 'sendsafe')
 export const FILES_DIR = join(DATA_DIR, 'files')
 
 const SCHEMA = `
@@ -47,7 +47,13 @@ let db: DatabaseSync | undefined
 export function useDb(): DatabaseSync {
   if (!db) {
     mkdirSync(FILES_DIR, { recursive: true, mode: 0o700 })
-    db = new DatabaseSync(join(DATA_DIR, 'safedrop.db'))
+    // Renamed from safedrop.db when the app became SendSafe. Move the WAL files with it or recent writes are lost.
+    if (existsSync(join(DATA_DIR, 'safedrop.db')) && !existsSync(join(DATA_DIR, 'sendsafe.db'))) {
+      for (const ext of ['', '-wal', '-shm']) {
+        if (existsSync(join(DATA_DIR, `safedrop.db${ext}`))) renameSync(join(DATA_DIR, `safedrop.db${ext}`), join(DATA_DIR, `sendsafe.db${ext}`))
+      }
+    }
+    db = new DatabaseSync(join(DATA_DIR, 'sendsafe.db'))
     db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;')
     db.exec(SCHEMA)
     try { db.exec('ALTER TABLE links ADD COLUMN token_enc TEXT') } catch { /* already migrated */ }
@@ -57,7 +63,9 @@ export function useDb(): DatabaseSync {
       'require_totp INTEGER NOT NULL DEFAULT 1',
       'session_hours INTEGER NOT NULL DEFAULT 12',
       'sharing_enabled INTEGER NOT NULL DEFAULT 1',
-      'onboarded INTEGER NOT NULL DEFAULT 0'
+      'onboarded INTEGER NOT NULL DEFAULT 0',
+      "relay_url TEXT NOT NULL DEFAULT ''",
+      "relay_token TEXT NOT NULL DEFAULT ''"
     ]) {
       try { db.exec(`ALTER TABLE owner ADD COLUMN ${col}`) } catch { /* already migrated */ }
     }

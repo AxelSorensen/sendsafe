@@ -8,6 +8,9 @@ const error = ref('')
 
 const loaded = await $fetch<{ displayName: string, requireTotp: boolean, sessionHours: number }>('/api/settings')
 Object.assign(form, loaded)
+// Save is only enabled once something differs from what is stored.
+const snapshot = ref(JSON.stringify(form))
+const dirty = computed(() => JSON.stringify(form) !== snapshot.value)
 
 async function save() {
   saving.value = true
@@ -15,6 +18,7 @@ async function save() {
   saved.value = false
   try {
     await $fetch('/api/settings', { method: 'PATCH', body: { ...form } })
+    snapshot.value = JSON.stringify(form)
     saved.value = true
     setTimeout(() => (saved.value = false), 2000)
   } catch (e: any) {
@@ -25,6 +29,24 @@ async function save() {
 }
 
 const { tunnel, retry, start, stop } = useTunnel()
+
+// Arriving via /admin/settings#sharing: scroll to the Sharing server card and flash its border.
+const route = useRoute()
+const sharingEl = ref<HTMLElement | null>(null)
+const flash = ref(false)
+function goToSharing() {
+  if (route.hash !== '#sharing') return
+  nextTick(() => {
+    sharingEl.value?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    flash.value = false
+    requestAnimationFrame(() => {
+      flash.value = true
+      setTimeout(() => (flash.value = false), 2400)
+    })
+  })
+}
+onMounted(() => setTimeout(goToSharing, 150))
+watch(() => route.hash, goToSharing)
 
 const openTour = inject<() => void>('openTour')
 const toggling = ref(false)
@@ -70,7 +92,7 @@ async function toggleSharing() {
 
     <p v-if="error" class="alert-error">{{ error }}</p>
     <div class="flex items-center gap-3">
-      <button class="btn" :disabled="saving">{{ saving ? 'Saving…' : 'Save settings' }}</button>
+      <button class="btn" :disabled="saving || !dirty">{{ saving ? 'Saving…' : 'Save settings' }}</button>
       <span v-if="saved" class="text-sm text-brand-600">Saved</span>
     </div>
   </form>
@@ -89,12 +111,7 @@ async function toggleSharing() {
       <button type="button" class="btn-ghost shrink-0" @click="openTour?.()">Show again</button>
     </section>
 
-    <section class="card p-6">
-      <h2 class="text-base font-semibold">Notifications</h2>
-      <p class="mt-1 text-sm text-slate-600">Desktop app only. You get an alert when a new file arrives. If you never see one, allow notifications for this app in your system settings.</p>
-    </section>
-
-    <section class="flex flex-col gap-3 card p-6 sm:flex-row sm:items-center sm:justify-between">
+    <section id="sharing" ref="sharingEl" class="flex flex-col gap-3 card p-6 sm:flex-row sm:items-center sm:justify-between" :class="flash && 'flash-ring'">
       <div class="min-w-0">
         <h2 class="text-base font-semibold">Sharing server</h2>
         <p class="mt-1 break-all text-sm text-slate-600">
@@ -120,5 +137,15 @@ async function toggleSharing() {
       </div>
     </section>
 
+
   </div>
 </template>
+
+<style scoped>
+.flash-ring { animation: flash-ring 1.2s ease-in-out 2; }
+@keyframes flash-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); border-color: rgb(203 213 225); }
+  50% { box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.35); border-color: rgb(37 99 235); }
+}
+@media (prefers-reduced-motion: reduce) { .flash-ring { animation: none; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.45); border-color: rgb(37 99 235); } }
+</style>

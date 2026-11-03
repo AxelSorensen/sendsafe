@@ -24,7 +24,7 @@ export function startTunnel(port: number) {
   clearTimeout(retryTimer)
   lastPort = port
   state = { status: 'starting', url: '', error: '' }
-  const child = spawn(process.env.SAFEDROP_CLOUDFLARED || 'cloudflared', ['tunnel', '--no-autoupdate', '--url', `http://localhost:${port}`], {
+  const child = spawn(process.env.SENDSAFE_CLOUDFLARED || 'cloudflared', ['tunnel', '--no-autoupdate', '--url', `http://localhost:${port}`], {
     stdio: ['ignore', 'ignore', 'pipe']
   })
   proc = child

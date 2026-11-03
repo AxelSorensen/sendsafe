@@ -33,5 +33,6 @@ export function useTunnel() {
     apply(t)
     if (t.enabled && (t.status === 'stopped' || t.status === 'error')) await start()
   }
-  return { tunnel, init, retry: start, start, stop }
+  const refresh = async () => apply(await $fetch<TunnelState>('/api/tunnel'))
+  return { tunnel, init, retry: start, start, stop, refresh }
 }

@@ -77,7 +77,8 @@ async function logout() {
           <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
           Back to inbox
         </NuxtLink>
-        <div v-if="isSettings" class="min-h-0 flex-1 overflow-y-auto"><slot /></div>
+        <!-- Padding + negative margin give the flashing ring room inside the scroll container so it is not clipped. -->
+        <div v-if="isSettings" class="-mx-3 min-h-0 flex-1 overflow-y-auto px-3 py-2"><slot /></div>
         <slot v-else />
       </div>
     </main>
