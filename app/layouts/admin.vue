@@ -58,7 +58,7 @@ async function logout() {
         </NuxtLink>
       </nav>
       <div class="flex items-center gap-2 px-2 text-xs text-slate-600" :title="tunnel.status === 'running' ? tunnel.url : tunnel.error">
-        <span class="size-2 shrink-0 rounded-full" :class="!tunnel.enabled ? 'bg-slate-400' : tunnel.status === 'running' ? 'bg-green-500' : tunnel.status === 'error' ? 'bg-red-500' : 'animate-pulse bg-amber-500'" />
+        <span class="size-2 shrink-0 rounded-full" :class="!tunnel.enabled ? 'bg-slate-400' : tunnel.status === 'running' ? 'bg-brand-500' : tunnel.status === 'error' ? 'bg-red-500' : 'animate-pulse bg-slate-400'" />
         <span v-if="!tunnel.enabled">Sharing server off</span>
         <span v-else-if="tunnel.status === 'running'">Public link online</span>
         <span v-else-if="tunnel.status === 'error'">Public link failed · <button class="underline" @click="retryTunnel">retry</button></span>

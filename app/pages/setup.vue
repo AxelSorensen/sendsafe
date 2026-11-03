@@ -16,9 +16,9 @@ const strength = computed(() => {
   if (missing > 0) return { level: 1, label: 'Too short', missing, bar: 'bg-red-500', text: 'text-red-600' }
   const kinds = [/[a-z]/, /[A-Z]/, /\d/, /[^A-Za-z0-9]/].filter(r => r.test(p)).length
   const score = (p.length >= 16 ? 2 : 0) + (p.length >= 20 ? 1 : 0) + kinds
-  if (score >= 5) return { level: 4, label: 'Strong', missing, bar: 'bg-green-500', text: 'text-green-600' }
-  if (score >= 3) return { level: 3, label: 'Good', missing, bar: 'bg-lime-500', text: 'text-lime-600' }
-  return { level: 2, label: 'Weak', missing, bar: 'bg-amber-500', text: 'text-amber-600' }
+  if (score >= 5) return { level: 4, label: 'Strong', missing, bar: 'bg-brand-600', text: 'text-brand-600' }
+  if (score >= 3) return { level: 3, label: 'Good', missing, bar: 'bg-brand-500', text: 'text-brand-500' }
+  return { level: 2, label: 'Weak', missing, bar: 'bg-slate-400', text: 'text-slate-500' }
 })
 const totp = ref<{ secret: string, qr: string } | null>(null)
 const { privateKey } = useVault()

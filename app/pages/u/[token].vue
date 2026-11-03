@@ -193,7 +193,7 @@ const INSTALL_URL = '/download'
       <div class="text-center">
         <div
           class="mx-auto grid size-14 place-items-center rounded-full"
-          :class="busy ? 'bg-slate-100 text-slate-500' : failedItems.length ? 'bg-amber-50 text-amber-600' : 'bg-brand-50 text-brand-600'"
+          :class="busy ? 'bg-slate-100 text-slate-500' : failedItems.length ? 'bg-red-50 text-red-600' : 'bg-brand-50 text-brand-600'"
         >
           <svg v-if="busy" viewBox="0 0 24 24" class="size-7 animate-spin" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 11-6.2-8.6" /></svg>
           <svg v-else-if="failedItems.length" viewBox="0 0 24 24" class="size-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5m0 3.5v.01" /><path d="M10.3 3.9L2.4 18a2 2 0 001.7 3h15.8a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z" /></svg>

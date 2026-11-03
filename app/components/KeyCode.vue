@@ -39,7 +39,7 @@ const C = 2 * Math.PI * R
       <div class="relative size-11 shrink-0" :title="`Changes in ${left}s`">
         <svg viewBox="0 0 36 36" class="size-full -rotate-90">
           <circle cx="18" cy="18" :r="R" fill="none" stroke="currentColor" class="text-slate-200" stroke-width="3" />
-          <circle cx="18" cy="18" :r="R" fill="none" stroke="currentColor" :class="left <= 5 ? 'text-amber-500' : 'text-brand-600'" stroke-width="3" stroke-linecap="round" :stroke-dasharray="C" :stroke-dashoffset="C * (1 - left / 30)" style="transition: stroke-dashoffset 0.25s linear" />
+          <circle cx="18" cy="18" :r="R" fill="none" stroke="currentColor" :class="left <= 5 ? 'text-slate-400' : 'text-brand-600'" stroke-width="3" stroke-linecap="round" :stroke-dasharray="C" :stroke-dashoffset="C * (1 - left / 30)" style="transition: stroke-dashoffset 0.25s linear" />
         </svg>
         <span class="absolute inset-0 grid place-items-center text-xs font-semibold tabular-nums text-slate-700">{{ left }}</span>
       </div>
