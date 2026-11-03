@@ -23,6 +23,8 @@ async function finishTour() {
 }
 onBeforeUnmount(() => clearInterval(expiryTimer))
 provide('openTour', () => (showTour.value = true))
+// Locking forgets the key in this window but keeps you logged in; unlock with your password.
+function lockSafe() { lock() }
 // Planned sections, shown greyed out until they exist.
 const soon = [
   { label: 'Messages', icon: ['M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z'] },
@@ -50,6 +52,7 @@ async function logout() {
   lock()
   location.assign('/login')
 }
+provide('signOut', logout)
 
 </script>
 
@@ -97,14 +100,14 @@ async function logout() {
         <NuxtLink to="/admin/settings" class="btn-ghost !p-2" title="Settings" aria-label="Settings">
           <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z" /></svg>
         </NuxtLink>
-        <button type="button" class="btn-ghost !p-2" title="Log out" aria-label="Log out" @click="logout">
-          <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></svg>
+        <button type="button" class="btn-ghost !p-2" title="Lock safe" aria-label="Lock safe" @click="lockSafe">
+          <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 118 0v3" /></svg>
         </button>
       </div>
       <!-- Wide window: full buttons in the sidebar. -->
       <div class="hidden shrink-0 flex-col gap-2 lg:flex">
         <NuxtLink to="/admin/settings" class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50" active-class="!bg-brand-100 !text-brand-700">Settings</NuxtLink>
-        <button class="btn w-full" @click="logout">Log out</button>
+        <button class="btn w-full !gap-2" @click="lockSafe"><svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 118 0v3" /></svg>Lock safe</button>
       </div>
     </aside>
     <Onboarding v-if="showTour && privateKey" @done="finishTour" />

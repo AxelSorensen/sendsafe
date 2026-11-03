@@ -90,6 +90,7 @@ onMounted(() => setTimeout(goToSharing, 150))
 watch(() => route.hash, goToSharing)
 
 const openTour = inject<() => void>('openTour')
+const signOut = inject<() => void>('signOut')
 const toggling = ref(false)
 async function toggleSharing() {
   toggling.value = true
@@ -189,6 +190,14 @@ async function toggleSharing() {
         <p class="mt-1 text-sm text-slate-600">A quick tour of the password, verification code and sharing server.</p>
       </div>
       <button type="button" class="btn-ghost shrink-0" @click="openTour?.()">Show again</button>
+    </section>
+
+    <section class="flex flex-col gap-3 card p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div class="min-w-0">
+        <h2 class="text-base font-semibold">Log out</h2>
+        <p class="mt-1 text-sm text-slate-600">Sign out of this account on this computer. To get back in you will need your password{{ form.requireTotp ? ' and authenticator code' : '' }}. Use Lock safe in the sidebar if you only want to lock it for a moment.</p>
+      </div>
+      <button type="button" class="btn-ghost shrink-0 !bg-slate-100 hover:!bg-slate-200" @click="signOut?.()">Log out</button>
     </section>
 
     <section id="sharing" ref="sharingEl" class="flex flex-col gap-3 card p-6 sm:flex-row sm:items-center sm:justify-between" :class="flash && 'flash-ring'">
