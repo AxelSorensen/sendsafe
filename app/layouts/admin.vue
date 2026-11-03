@@ -160,6 +160,11 @@ provide('signOut', logout)
   <div>
   <!-- Locked: just the padlock and one input. The padlock clicks shut each time this screen appears. -->
   <main v-if="isLocked" class="lock-screen fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-gradient-to-br from-brand-50 to-brand-100 px-4 py-10">
+    <!-- Back sits in the corner so showing it never moves the form. -->
+    <button v-if="unlockStep === 'code' && needPassword" type="button" class="btn-ghost absolute left-4 top-[calc(var(--titlebar,0px)+0.75rem)] !gap-1 !px-3 !py-1.5 !text-slate-500" @click="unlockStep = firstStep; unlockCode = ''">
+      <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
+      Back
+    </button>
     <div class="w-full max-w-xs text-center">
       <!-- The SendSafe icon, with a small padlock badge that clicks shut each time this screen appears. -->
       <div class="lock-icon relative mx-auto size-24">
@@ -188,10 +193,7 @@ provide('signOut', logout)
           </button>
         </div>
         <p v-if="error" class="alert-error mt-4 text-sm">{{ error }}</p>
-        <button v-if="unlockStep === 'code' && needPassword" type="button" class="btn-ghost mx-auto mt-7 !gap-1.5 !px-4 !py-2 !text-slate-500" @click="unlockStep = firstStep; unlockCode = ''">
-          <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
-          Back
-        </button>
+
       </form>
       <button type="button" class="mt-6 text-xs text-slate-400 hover:text-slate-600" @click="logout">Log out</button>
     </div>
