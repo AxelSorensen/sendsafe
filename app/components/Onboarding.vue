@@ -4,11 +4,28 @@ const emit = defineEmits<{ done: [] }>()
 const step = ref(0)
 const steps = [
   { title: 'Welcome to SendSafe', body: 'Receive files privately. Everything is encrypted, and only you can open it.' },
+  { name: true, title: 'What should we call you?', body: 'People who open your link see this name, so they know the files go to you.' },
   { title: 'Share your link', body: 'Copy your link from the Inbox and send it to the person with files for you. Only the link goes out, never the files.' },
   { title: 'Files arrive here', body: 'They upload through your link, encrypted in their browser. New files land in your Inbox and you get a notification. Keep SendSafe running to receive them.' },
   { title: 'Safe even if your computer is stolen', body: 'Your files are encrypted with a key that only your password unlocks, so whoever has the computer sees nothing readable. We cannot reset your password, so keep it somewhere safe.' }
 ]
 const last = computed(() => step.value === steps.length - 1)
+
+// The name is asked once the password and authenticator are set up. It is optional and can be changed in Settings.
+const name = ref('')
+const saving = ref(false)
+onMounted(async () => {
+  try { name.value = (await $fetch<{ displayName: string }>('/api/settings')).displayName } catch { /* leave empty */ }
+})
+async function next() {
+  if (last.value) return emit('done')
+  if (steps[step.value]!.name) {
+    saving.value = true
+    try { await $fetch('/api/settings', { method: 'PATCH', body: { displayName: name.value.trim() } }) } catch { /* optional: skip silently */ }
+    saving.value = false
+  }
+  step.value++
+}
 </script>
 
 <template>
@@ -26,21 +43,26 @@ const last = computed(() => step.value === steps.length - 1)
               <path d="M512 232a190 190 0 0 1 112 344l44 218a30 30 0 0 1-30 36H386a30 30 0 0 1-30-36l44-218A190 190 0 0 1 512 232z" fill="#fff" transform="translate(512 512) scale(0.76) translate(-512 -531)" />
             </svg>
           </div>
-          <!-- 1: your link goes out as a message -->
+          <!-- 1: your name -->
           <svg v-else-if="step === 1" viewBox="0 0 300 120" class="h-full w-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <g class="text-slate-400"><circle cx="150" cy="44" r="18" fill="white" /><circle cx="150" cy="40" r="6" /><path d="M138 54a12 12 0 0124 0" /></g>
+            <g class="pop"><rect x="92" y="76" width="116" height="26" rx="13" fill="white" /><rect class="slide" x="108" y="85" width="84" height="8" rx="4" fill="currentColor" stroke="none" /></g>
+          </svg>
+          <!-- 2: your link goes out as a message -->
+          <svg v-else-if="step === 2" viewBox="0 0 300 120" class="h-full w-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <g class="text-slate-400"><rect x="20" y="30" width="72" height="52" rx="8" fill="white" /><path d="M10 92h92" /></g>
             <g><rect x="32" y="50" width="48" height="14" rx="7" fill="currentColor" stroke="none" /><path d="M42 57h28" stroke="white" /></g>
             <path class="flow" d="M104 57h60" stroke-dasharray="4 6" />
             <g class="pop"><rect x="178" y="26" width="104" height="58" rx="12" fill="white" /><path d="M200 82l-8 12 20-12" fill="white" /><rect x="194" y="42" width="72" height="10" rx="5" fill="currentColor" stroke="none" opacity=".25" /><rect x="194" y="58" width="44" height="10" rx="5" fill="currentColor" stroke="none" /></g>
           </svg>
-          <!-- 2: new file lands in the inbox, bell rings -->
-          <svg v-else-if="step === 2" viewBox="0 0 300 120" class="h-full w-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <!-- 3: new file lands in the inbox, bell rings -->
+          <svg v-else-if="step === 3" viewBox="0 0 300 120" class="h-full w-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <g class="text-slate-300"><rect x="50" y="22" width="200" height="82" rx="10" fill="white" /><path d="M50 42h200" /></g>
             <g class="text-slate-300"><rect x="64" y="52" width="130" height="10" rx="5" fill="currentColor" stroke="none" opacity=".5" /><rect x="64" y="72" width="100" height="10" rx="5" fill="currentColor" stroke="none" opacity=".5" /></g>
             <g class="slide"><rect x="64" y="86" width="150" height="10" rx="5" fill="currentColor" stroke="none" /><rect x="222" y="86" width="20" height="10" rx="5" fill="currentColor" stroke="none" opacity=".35" /></g>
             <g class="bell"><circle cx="246" cy="22" r="14" fill="currentColor" stroke="none" /><path d="M240 27h12l-2-3v-4a4 4 0 00-8 0v4z" fill="white" stroke="white" stroke-width="1.5" /></g>
           </svg>
-          <!-- 3: a locked laptop; nobody else gets in -->
+          <!-- 4: a locked laptop; nobody else gets in -->
           <svg v-else viewBox="0 0 300 120" class="h-full w-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <g class="text-slate-400"><rect x="92" y="22" width="116" height="70" rx="8" fill="white" /><path d="M78 100h144" /></g>
             <g class="pop"><rect x="132" y="50" width="36" height="26" rx="5" fill="currentColor" stroke="none" /><path d="M139 50v-6a11 11 0 0122 0v6" /></g>
@@ -52,9 +74,10 @@ const last = computed(() => step.value === steps.length - 1)
 
         <div class="px-8 pt-6 text-center">
           <Transition name="ob" mode="out-in">
-            <div :key="step">
+            <div :key="step" class="min-h-44">
               <h2 id="ob-title" class="text-xl font-semibold tracking-tight">{{ steps[step]!.title }}</h2>
-              <p class="mx-auto mt-2 min-h-24 max-w-sm text-sm leading-relaxed text-slate-500">{{ steps[step]!.body }}</p>
+              <p class="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-slate-500">{{ steps[step]!.body }}</p>
+              <input v-if="steps[step]!.name" v-model="name" type="text" maxlength="80" autocomplete="name" placeholder="e.g. Jane Smith" class="field mx-auto mt-4 max-w-xs text-center" @keydown.enter.prevent="next">
             </div>
           </Transition>
         </div>
@@ -66,7 +89,7 @@ const last = computed(() => step.value === steps.length - 1)
         <div class="flex items-center gap-2 px-6 pb-6 pt-5">
           <button v-if="step > 0" type="button" class="btn-ghost" @click="step--">Back</button>
           <button v-else type="button" class="btn-ghost" @click="emit('done')">Skip</button>
-          <button type="button" class="btn ml-auto min-w-28" @click="last ? emit('done') : step++">{{ last ? 'Get started' : step === 0 ? 'Start' : 'Next' }}</button>
+          <button type="button" class="btn ml-auto min-w-28" @click="next" :disabled="saving">{{ last ? 'Get started' : step === 0 ? 'Start' : 'Next' }}</button>
         </div>
       </div>
     </div>
