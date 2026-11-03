@@ -46,9 +46,9 @@ main{width:100%;max-width:28rem;padding:2rem 1.25rem;text-align:center}
 img{width:80px;height:80px}h1{margin:1rem 0 .4rem;font-size:1.9rem;letter-spacing:-.02em}
 .lead{margin:0 auto 1.75rem;color:#475569}
 .btns{display:flex;flex-direction:column;gap:.6rem}
-a.btn{display:block;background:#2563eb;color:#fff;text-decoration:none;font-weight:600;padding:.85rem 1rem;border-radius:.8rem}
+a.btn{display:flex;flex-direction:column;align-items:center;justify-content:center;height:4rem;white-space:nowrap;background:#2563eb;color:#fff;text-decoration:none;font-weight:600;padding:0 1rem;border-radius:.8rem}
 a.btn:hover{background:#1d4ed8}a.btn small{display:block;font-weight:400;font-size:.78rem;opacity:.85}
-.os{display:none}body[data-os=mac] .os-mac,body[data-os=win] .os-win,body:not([data-os]) .os{display:block}
+.os{display:none}body[data-os=mac] .os-mac,body[data-os=win] .os-win,body:not([data-os]) .os{display:flex}
 .other{margin-top:1.5rem;font-size:.85rem;color:#64748b}.other a{color:#2563eb;text-decoration:none;margin:0 .35rem}.other a:hover{text-decoration:underline}
 details{margin-top:1.75rem;text-align:left;font-size:.88rem;color:#475569;border-top:1px solid #e2e8f0;padding-top:1rem}
 summary{cursor:pointer;color:#0f172a;font-weight:600}details p{margin:.6rem 0 0}
@@ -59,9 +59,9 @@ code{background:#f1f5f9;padding:.1rem .35rem;border-radius:.35rem;font-size:.8re
 <h1>SendSafe</h1>
 <p class="lead">Send and receive files safely. Encrypted before it leaves your device.</p>
 <div class="btns">
-<a class="btn os os-mac" href="${DL_BASE}/SendSafe-mac-arm.dmg">Download for Mac<small>Apple silicon (M1 or newer)</small></a>
+<a class="btn os os-mac" href="${DL_BASE}/SendSafe-mac-arm.dmg">Download for Mac<small>Apple silicon</small></a>
 <a class="btn os os-mac" style="background:#e2e8f0;color:#0f172a" href="${DL_BASE}/SendSafe-mac-intel.dmg">Download for Mac<small>Intel</small></a>
-<a class="btn os os-win" href="${DL_BASE}/SendSafe-windows.exe">Download for Windows<small>Windows 10 and 11</small></a>
+<a class="btn os os-win" href="${DL_BASE}/SendSafe-windows.exe">Download for Windows<small>Windows 10 / 11</small></a>
 </div>
 <p class="other" id="other"></p>
 <details><summary>Help installing</summary>
