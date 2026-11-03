@@ -116,6 +116,18 @@ export function listAccounts(): { id: string, name: string }[] {
   return out
 }
 
+/** Which account does this email belong to? Accounts made before emails existed have none: they match any email (the password still decides). */
+export function findProfileByEmail(email: string): string | null {
+  const e = email.trim().toLowerCase()
+  if (!e) return null
+  const rows: { id: string, email: string }[] = []
+  for (const id of listProfileIds()) {
+    const o = useDb(id).prepare('SELECT email FROM owner WHERE id = 1 AND totp_enabled = 1').get() as { email: string } | undefined
+    if (o) rows.push({ id, email: o.email.trim().toLowerCase() })
+  }
+  return rows.find(r => r.email === e)?.id ?? rows.find(r => !r.email)?.id ?? null
+}
+
 /** Make a new, empty profile. Half-finished ones from earlier attempts are removed first. */
 export function createProfile(): string {
   for (const id of listProfileIds()) {

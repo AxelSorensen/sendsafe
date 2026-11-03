@@ -141,7 +141,7 @@ function back() {
         </div>
         <p v-if="error" class="alert-error">{{ error }}</p>
         <button :disabled="busy" class="btn w-full">{{ busy ? 'Generating keys…' : 'Create safe' }}</button>
-        <p v-if="hasAccounts" class="text-center text-sm text-slate-500">
+        <p class="text-center text-sm text-slate-500">
           Already have an account? <NuxtLink to="/login" class="font-medium text-brand-600 hover:underline">Log in</NuxtLink>
         </p>
       </form>
