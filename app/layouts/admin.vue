@@ -101,13 +101,13 @@ provide('signOut', logout)
       <div class="shrink-0 px-2 py-1"><BrandLogo /></div>
       <!-- Narrow window: tabs become a phone-style bar fixed to the bottom. -->
       <nav class="fixed inset-x-0 bottom-0 z-30 flex border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] lg:static lg:flex-1 lg:flex-col lg:gap-1 lg:border-0 lg:bg-transparent lg:pb-0">
-        <NuxtLink to="/admin" class="btn-ghost flex-1 flex-col !gap-0.5 !rounded-none !py-2 !text-[11px] lg:flex-none lg:flex-row lg:!justify-start lg:!gap-3 lg:!rounded-lg lg:!py-2.5 lg:!text-sm" active-class="!bg-brand-100 !text-brand-700 font-semibold" exact>
+        <NuxtLink to="/admin" class="btn-ghost flex-1 flex-col !gap-0.5 !rounded-none !py-2 !text-[11px] lg:flex-none lg:flex-row lg:!justify-start lg:!gap-3 lg:!rounded-lg lg:!py-2.5 lg:!text-sm border-t-2 border-brand-600 !bg-brand-100 !text-brand-700 font-semibold lg:border-t-0" aria-current="page">
           <svg viewBox="0 0 24 24" class="size-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2" /><path d="M5.5 5.1L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.5-6.9A2 2 0 0016.8 4H7.2a2 2 0 00-1.7 1.1z" /></svg>
           Inbox
         </NuxtLink>
         <span
           v-for="t in soon" :key="t.label"
-          class="btn-ghost cursor-not-allowed flex-1 flex-col !gap-0.5 !rounded-none !py-2 !text-[11px] lg:flex-none lg:flex-row lg:!justify-start lg:!gap-3 lg:!rounded-lg lg:!py-2.5 lg:!text-sm !text-slate-400 hover:!bg-transparent hover:!text-slate-400"
+          class="btn-ghost cursor-not-allowed border-t-2 border-transparent lg:border-t-0 flex-1 flex-col !gap-0.5 !rounded-none !py-2 !text-[11px] lg:flex-none lg:flex-row lg:!justify-start lg:!gap-3 lg:!rounded-lg lg:!py-2.5 lg:!text-sm !text-slate-400 hover:!bg-transparent hover:!text-slate-400"
           aria-disabled="true" :title="`${t.label}: coming soon`"
         >
           <svg viewBox="0 0 24 24" class="size-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path v-for="d in t.icon" :key="d" :d="d" /></svg>
