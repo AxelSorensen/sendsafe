@@ -281,7 +281,12 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
   if (up && (req.method === 'GET' || req.method === 'POST')) return upload(req, env, ctx, up[1]!)
 
   // Only the uploader page and its assets are public. The page shows its own "closed" screen when the API says so.
-  if (/^\/u\/[A-Za-z0-9_-]+\/?$/.test(path)) return env.ASSETS.fetch(new Request(new URL('/200.html', url), { method: 'GET', headers: req.headers }))
+  if (/^\/u\/[A-Za-z0-9_-]+\/?$/.test(path)) {
+    const page = await env.ASSETS.fetch(new Request(new URL('/200.html', url), { method: 'GET', headers: req.headers }))
+    // Right title from the first paint (the app sets the same one once it loads).
+    const html = (await page.text()).replace('<title>SendSafe</title>', '<title>Upload | SendSafe</title>')
+    return new Response(html, { status: page.status, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' } })
+  }
   if (path.startsWith('/_nuxt/') || ['/favicon.ico', '/favicon.svg', '/apple-touch-icon.png', '/og.png', '/robots.txt'].includes(path)) return env.ASSETS.fetch(req)
   if (path === '/.well-known/security.txt') return new Response(SECURITY_TXT, { headers: { 'content-type': 'text/plain; charset=utf-8' } })
   if ((path === '/' || path === '/download') && (req.method === 'GET' || req.method === 'HEAD')) return new Response(HOME, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=300' } })
