@@ -51,6 +51,14 @@ a.btn:hover{background:#1d4ed8}a.btn small{display:block;font-weight:400;font-si
 select{margin-left:.4rem;font:inherit;font-size:.85rem;color:#0f172a;background:#fff;border:1px solid #cbd5e1;border-radius:.6rem;padding:.4rem .6rem;cursor:pointer}
 details{margin-top:1.75rem;text-align:left;font-size:.88rem;color:#475569;border-top:1px solid #e2e8f0;padding-top:1rem}
 summary{cursor:pointer;color:#0f172a;font-weight:600}details p{margin:.6rem 0 0}
+#after{margin-top:1.75rem;text-align:left;background:#fff;border:1px solid #e2e8f0;border-radius:1rem;padding:1.1rem 1.25rem;display:none}
+body[data-os=mac] #after{display:block}
+#after h2{margin:0 0 .75rem;font-size:.95rem}
+#after ol{list-style:none;margin:0;padding:0;counter-reset:s}
+#after li{counter-increment:s;display:flex;gap:.75rem;align-items:flex-start;margin:.65rem 0;font-size:.9rem;color:#334155}
+#after li:before{content:counter(s);flex:none;width:1.5rem;height:1.5rem;border-radius:99px;background:#dbeafe;color:#1d4ed8;font-weight:700;font-size:.8rem;display:grid;place-items:center}
+#after .mock{margin-top:.45rem;display:flex;align-items:center;justify-content:space-between;gap:.75rem;background:#f1f5f9;border-radius:.6rem;padding:.55rem .75rem;font-size:.8rem;color:#475569}
+#after .mock b{background:#2563eb;color:#fff;font-weight:600;border-radius:.45rem;padding:.25rem .6rem;white-space:nowrap}
 code{background:#f1f5f9;padding:.1rem .35rem;border-radius:.35rem;font-size:.8rem}
 </style></head>
 <body><main>
@@ -63,6 +71,11 @@ code{background:#f1f5f9;padding:.1rem .35rem;border-radius:.35rem;font-size:.8re
 <option value="mac-intel">Mac · Intel</option>
 <option value="win">Windows 10 / 11</option>
 </select></p>
+<div id="after"><h2>After you download (Mac)</h2><ol>
+<li><span>Open the downloaded file and drag <b>SendSafe</b> into <b>Applications</b>.</span></li>
+<li><span>Open SendSafe from Applications. macOS will say it can't verify the app. Click <b>Done</b>, not Move to Trash.</span></li>
+<li><span>Open <b>System Settings</b>, then <b>Privacy &amp; Security</b>, scroll down and click <b>Open Anyway</b>:<span class="mock"><span>"SendSafe" was blocked from use because it is not from an identified developer.</span><b>Open Anyway</b></span></span></li>
+</ol></div>
 <details><summary>Help installing</summary>
 <p><b>Which Mac?</b> Apple menu, About This Mac. "Chip: Apple M…" means Apple silicon, "Processor: Intel" means Intel.</p>
 <p><b>Mac:</b> open the file, drag SendSafe to Applications, then open it. If macOS says it can't verify it, click Done, open System Settings, Privacy &amp; Security, scroll down and click <b>Open Anyway</b> next to SendSafe (older macOS: right-click the app, choose Open). If it says "damaged", run <code>xattr -cr /Applications/SendSafe.app</code> in Terminal.</p>
