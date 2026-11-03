@@ -12,6 +12,7 @@ defineProps<{ title: string, subtitle?: string }>()
         <div class="mt-6"><slot /></div>
       </div>
       <p class="mt-6 text-center text-xs text-slate-400">End-to-end encrypted · zero-knowledge server</p>
+      <UpdateLine />
     </div>
   </main>
 </template>

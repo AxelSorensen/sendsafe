@@ -28,6 +28,11 @@ async function finishTour() {
 }
 onBeforeUnmount(() => clearInterval(expiryTimer))
 provide('openTour', () => (showTour.value = true))
+// Background update check: when a newer version exists, offer it in a small card (bottom right).
+const updater = useUpdater()
+const updateDismissed = ref(false)
+onMounted(() => { if (updater.available()) { updater.loadVersion(); setTimeout(() => updater.check(true), 4000) } })
+
 // ---- Auto-lock after inactivity, with a short warning ----
 const autoLockMin = ref(0)
 const countdown = ref(0) // seconds left in the warning; 0 = no warning showing
@@ -256,6 +261,16 @@ provide('signOut', logout)
       </div>
     </aside>
     <Onboarding v-if="showTour && privateKey" @done="finishTour" />
+    <Transition name="so">
+      <div v-if="updater.state.status === 'available' && !updateDismissed && !isLocked" class="fixed bottom-4 right-4 z-[55] w-72 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl" role="status">
+        <p class="text-sm font-semibold">Update available</p>
+        <p class="mt-0.5 text-xs text-slate-500">SendSafe {{ updater.state.latest }} is ready. The app restarts to finish.</p>
+        <div class="mt-3 flex gap-2">
+          <button type="button" class="btn !px-3 !py-1.5" @click="updater.install()">Update and restart</button>
+          <button type="button" class="btn-ghost !px-3 !py-1.5" @click="updateDismissed = true">Later</button>
+        </div>
+      </div>
+    </Transition>
     <Transition name="so">
       <div v-if="countdown > 0 && !isLocked" class="fixed inset-0 z-[65] grid place-items-center bg-slate-900/60 p-4 backdrop-blur-sm" role="alertdialog" aria-modal="true" aria-labelledby="al-title">
         <div class="w-full max-w-xs rounded-2xl bg-white p-7 text-center shadow-2xl">

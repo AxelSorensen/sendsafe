@@ -77,6 +77,9 @@ onMounted(() => setTimeout(goToSharing, 150))
 watch(() => route.hash, goToSharing)
 
 const { theme, set: setTheme } = useTheme()
+const updater = useUpdater()
+const inApp = ref(false)
+onMounted(() => { inApp.value = updater.available(); if (inApp.value) updater.loadVersion() })
 const openTour = inject<() => void>('openTour')
 const signOut = inject<() => void>('signOut')
 const toggling = ref(false)
@@ -175,6 +178,22 @@ async function toggleSharing() {
       <button class="btn" :disabled="saving || !dirty">{{ saving ? 'Saving…' : 'Save settings' }}</button>
     </div>
   </form>
+
+    <section v-if="inApp" class="card flex flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div class="min-w-0">
+        <h2 class="text-base font-semibold">SendSafe {{ updater.state.version ? 'v' + updater.state.version : '' }}</h2>
+        <p class="mt-1 text-sm text-slate-600">
+          <template v-if="updater.state.status === 'checking'">Checking for updates…</template>
+          <template v-else-if="updater.state.status === 'uptodate'">You have the latest version.</template>
+          <template v-else-if="updater.state.status === 'available'">Version {{ updater.state.latest }} is available.</template>
+          <template v-else-if="updater.state.status === 'downloading'">Downloading the update… {{ updater.state.progress }}%</template>
+          <template v-else-if="updater.state.status === 'error'"><span class="text-red-600">{{ updater.state.error }}</span></template>
+          <template v-else>Updates are downloaded and installed from inside the app.</template>
+        </p>
+      </div>
+      <button v-if="updater.state.status === 'available'" type="button" class="btn shrink-0" @click="updater.install()">Update and restart</button>
+      <button v-else type="button" class="btn-ghost shrink-0 !bg-slate-100 hover:!bg-slate-200" :disabled="updater.state.status === 'checking' || updater.state.status === 'downloading'" @click="updater.check()">Check for updates</button>
+    </section>
 
     <section class="card flex flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between">
       <div class="min-w-0">
