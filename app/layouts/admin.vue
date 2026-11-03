@@ -93,16 +93,16 @@ watch(isLocked, (l) => { if (l) loadUnlockMode() }, { immediate: true })
 
 // One question at a time: password first, then the code when both are needed.
 const unlocking = ref(false)
+const unlockStep = ref<'password' | 'code'>('password')
+const firstStep = computed<'password' | 'code'>(() => (needPassword.value ? 'password' : 'code'))
+const showPw = computed(() => unlockStep.value === 'password' && needPassword.value)
+const showCode = computed(() => unlockStep.value === 'code' && needUnlockCode.value)
 // The send button only appears once there is something to send.
 const hasInput = computed(() => (showPw.value ? unlockPw.value : unlockCode.value).length > 0)
 // Once it has appeared it stays for this step, so deleting and retyping never makes it blink.
 const showSend = ref(false)
 watch(hasInput, (v) => { if (v) showSend.value = true })
 watch([isLocked, () => unlockStep.value], () => { showSend.value = false })
-const unlockStep = ref<'password' | 'code'>('password')
-const firstStep = computed<'password' | 'code'>(() => (needPassword.value ? 'password' : 'code'))
-const showPw = computed(() => unlockStep.value === 'password' && needPassword.value)
-const showCode = computed(() => unlockStep.value === 'code' && needUnlockCode.value)
 watch([isLocked, firstStep], ([l]) => { if (l) unlockStep.value = firstStep.value }, { immediate: true })
 watch([unlockStep, isLocked], () => nextTick(() => document.getElementById(showPw.value ? 'unlock-pw' : 'unlock-code')?.focus()), { flush: 'post' })
 
