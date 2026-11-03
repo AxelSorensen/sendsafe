@@ -15,12 +15,13 @@ export default defineEventHandler(async (event) => {
   }
 
   const secret = generateTotpSecret()
+  const displayName = typeof body?.displayName === 'string' ? body.displayName.trim().slice(0, 80) : ''
   useDb().prepare(
-    `INSERT INTO owner (id, auth_hash, kdf_salt, public_key, wrapped_private_key, wrap_iv, totp_secret, created_at)
-     VALUES (1, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(hashSecret(authSecret), kdfSalt, publicKey, wrappedPrivateKey, wrapIv, secret, Date.now())
+    `INSERT INTO owner (id, auth_hash, kdf_salt, public_key, wrapped_private_key, wrap_iv, totp_secret, created_at, display_name)
+     VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(hashSecret(authSecret), kdfSalt, publicKey, wrappedPrivateKey, wrapIv, secret, Date.now(), displayName)
 
   createSession(event, false)
-  const uri = otpauthUri(secret)
+  const uri = otpauthUri(secret, displayName)
   return { secret, uri, qr: await QRCode.toDataURL(uri, { margin: 1, width: 240 }) }
 })

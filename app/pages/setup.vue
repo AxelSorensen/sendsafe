@@ -4,6 +4,7 @@ const status = await $fetch<{ setup: boolean, needsSetupToken: boolean }>('/api/
 const hasAccounts = ((await $fetch<{ accounts: unknown[] }>('/api/profiles')).accounts.length) > 0
 if (status.setup) await navigateTo('/login', { replace: true })
 
+const displayName = ref('')
 const password = ref('')
 const confirm = ref('')
 const setupToken = ref('')
@@ -36,7 +37,7 @@ async function create() {
     created = v
     totp.value = await $fetch<{ secret: string, qr: string }>('/api/auth/setup', {
       method: 'POST',
-      body: { ...v, setupToken: setupToken.value }
+      body: { ...v, setupToken: setupToken.value, displayName: displayName.value.trim() }
     })
   } catch (e: any) {
     error.value = e?.data?.statusMessage || 'Setup failed.'
@@ -79,6 +80,11 @@ async function verify() {
       <div v-if="status.needsSetupToken">
         <label class="label">Setup token</label>
         <input v-model="setupToken" type="password" placeholder="From server environment" class="field">
+      </div>
+      <div>
+        <label class="label" for="su-name">Your name</label>
+        <input id="su-name" v-model="displayName" type="text" maxlength="80" autocomplete="name" placeholder="e.g. Jane Smith" class="field">
+        <p class="mt-1 text-xs text-slate-500">Shown in your authenticator app and to people who open your link.</p>
       </div>
       <div>
         <label class="label">Password</label>

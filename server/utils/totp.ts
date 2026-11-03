@@ -59,6 +59,10 @@ export function verifyTotp(secretB32: string, code: string, lastUsedStep = 0): n
   return null
 }
 
-export function otpauthUri(secretB32: string): string {
-  return `otpauth://totp/SendSafe:owner?secret=${secretB32}&issuer=SendSafe&algorithm=SHA1&digits=6&period=30`
+export function otpauthUri(secretB32: string, name = ''): string {
+  const label = encodeURIComponent(name.trim() || 'owner')
+  // `image` is read by some authenticator apps (most pick the icon from the issuer name instead).
+  const base = process.env.SENDSAFE_RELAY_URL?.replace(/\/+$/, '')
+  const image = base ? `&image=${encodeURIComponent(`${base}/apple-touch-icon.png`)}` : ''
+  return `otpauth://totp/SendSafe:${label}?secret=${secretB32}&issuer=SendSafe&algorithm=SHA1&digits=6&period=30${image}`
 }
