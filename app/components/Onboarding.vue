@@ -17,11 +17,15 @@ const last = computed(() => step.value === steps.length - 1)
       <div class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
         <div class="mx-6 mt-6 grid h-40 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-brand-50 to-slate-50 text-brand-600">
           <Transition name="ob" mode="out-in">
-          <!-- 0: welcome: the plain logo, no motion -->
-          <svg v-if="step === 0" viewBox="100 100 824 824" class="size-20" aria-hidden="true">
-            <rect x="100" y="100" width="824" height="824" rx="185" fill="#2563eb" />
-            <path d="M512 232a190 190 0 0 1 112 344l44 218a30 30 0 0 1-30 36H386a30 30 0 0 1-30-36l44-218A190 190 0 0 1 512 232z" fill="#fff" transform="translate(512 512) scale(0.76) translate(-512 -531)" />
-          </svg>
+          <!-- 0: welcome: the plain logo with soft rings pulsing out behind it -->
+          <div v-if="step === 0" class="relative grid size-20 place-items-center" aria-hidden="true">
+            <span class="ring absolute inset-0 rounded-[1.4rem] border-2 border-brand-600" />
+            <span class="ring ring2 absolute inset-0 rounded-[1.4rem] border-2 border-brand-600" />
+            <svg viewBox="100 100 824 824" class="relative size-20">
+              <rect x="100" y="100" width="824" height="824" rx="185" fill="#2563eb" />
+              <path d="M512 232a190 190 0 0 1 112 344l44 218a30 30 0 0 1-30 36H386a30 30 0 0 1-30-36l44-218A190 190 0 0 1 512 232z" fill="#fff" transform="translate(512 512) scale(0.76) translate(-512 -531)" />
+            </svg>
+          </div>
           <!-- 1: your link goes out as a message -->
           <svg v-else-if="step === 1" viewBox="0 0 300 120" class="h-full w-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <g class="text-slate-400"><rect x="20" y="30" width="72" height="52" rx="8" fill="white" /><path d="M10 92h92" /></g>
@@ -81,6 +85,9 @@ const last = computed(() => step.value === steps.length - 1)
 @keyframes fade { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
 .shake { transform-box: fill-box; transform-origin: center; animation: shake 2.4s ease-in-out infinite; }
 @keyframes shake { 0%, 60%, 100% { transform: translateX(0); } 68% { transform: translateX(-3px); } 76% { transform: translateX(3px); } 84% { transform: translateX(-2px); } 92% { transform: translateX(2px); } }
+.ring { opacity: 0; animation: ring 2.8s ease-out infinite; }
+.ring2 { animation-delay: 1.4s; }
+@keyframes ring { 0% { transform: scale(1); opacity: .45; } 100% { transform: scale(1.9); opacity: 0; } }
 .ob-enter-active, .ob-leave-active { transition: opacity .18s ease, transform .18s ease; }
 .ob-enter-from { opacity: 0; transform: translateY(6px); }
 .ob-leave-to { opacity: 0; transform: translateY(-6px); }
