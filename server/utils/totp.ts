@@ -59,6 +59,15 @@ export function verifyTotp(secretB32: string, code: string, lastUsedStep = 0): n
   return null
 }
 
+/** True when the code is a valid one for now (any of the 3 steps), even if it was already used. Lets us say "already used" instead of "wrong". */
+export function isValidButUsed(secretB32: string, code: string): boolean {
+  if (!/^\d{6}$/.test(code)) return false
+  const secret = base32Decode(secretB32)
+  const now = Math.floor(Date.now() / 30000)
+  for (let step = now - 1; step <= now + 1; step++) if (hotp(secret, step) === code) return true
+  return false
+}
+
 export function otpauthUri(secretB32: string, name = ''): string {
   const label = encodeURIComponent(name.trim() || 'owner')
   // `image` is read by some authenticator apps (most pick the icon from the issuer name instead).

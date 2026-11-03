@@ -71,7 +71,7 @@ async function login() {
     await new Promise(r => setTimeout(r, 1300))
     await navigateTo('/admin')
   } catch (e: any) {
-    error.value = e?.data?.statusMessage === 'Too many requests' ? 'Too many attempts. Wait and retry.' : 'Invalid credentials.'
+    error.value = e?.data?.statusMessage === 'Too many requests' ? 'Too many attempts. Wait and retry.' : e?.data?.statusMessage === 'Code already used' ? 'That code was just used. Wait for the next one (it changes every 30 seconds).' : 'Invalid credentials.'
     step.value = 'creds'
     code.value = ''
   } finally {

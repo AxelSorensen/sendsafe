@@ -112,7 +112,7 @@ async function unlock() {
     unlockPw.value = ''
     unlockCode.value = ''
   } catch (e: any) {
-    error.value = e?.data?.statusMessage === 'Invalid code' ? 'That code is not right.' : needPassword.value ? 'Wrong password.' : 'Could not unlock.'
+    error.value = e?.data?.statusMessage === 'Code already used' ? 'That code was just used. Wait for the next one (it changes every 30 seconds).' : e?.data?.statusMessage === 'Invalid code' ? 'That code is not right.' : needPassword.value ? 'Wrong password.' : 'Could not unlock.'
     unlockCode.value = ''
     unlockStep.value = firstStep.value
   }

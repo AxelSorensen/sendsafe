@@ -11,7 +11,8 @@ export default defineEventHandler(async (event) => {
   const db = useDb()
   if (owner.require_totp) {
     const step = verifyTotp(owner.totp_secret, String(code ?? ''), owner.totp_last_step)
-    if (!step) throw fail()
+    // The password was right at this point, so it is safe to say a correct code was simply used a moment ago.
+    if (!step) throw isValidButUsed(owner.totp_secret, String(code ?? '')) ? createError({ statusCode: 401, statusMessage: 'Code already used' }) : fail()
     db.prepare('UPDATE owner SET totp_last_step = ? WHERE id = 1').run(step)
   }
   // Older accounts have no email yet: remember the one used for this successful login.
