@@ -92,6 +92,7 @@ const loadUnlockMode = async () => {
 watch(isLocked, (l) => { if (l) loadUnlockMode() }, { immediate: true })
 
 // One question at a time: password first, then the code when both are needed.
+const unlocking = ref(false)
 const unlockStep = ref<'password' | 'code'>('password')
 const firstStep = computed<'password' | 'code'>(() => (needPassword.value ? 'password' : 'code'))
 const showPw = computed(() => unlockStep.value === 'password' && needPassword.value)
@@ -102,6 +103,7 @@ watch([unlockStep, isLocked], () => nextTick(() => document.getElementById(showP
 async function unlock() {
   error.value = ''
   if (unlockStep.value === 'password' && needUnlockCode.value) { unlockStep.value = 'code'; return }
+  unlocking.value = true
   try {
     const v = await $fetch<{ salt: string, wrappedPrivateKey: string, wrapIv: string }>('/api/auth/unlock', { method: 'POST', body: { code: unlockCode.value } })
     if (needPassword.value) {
@@ -115,6 +117,8 @@ async function unlock() {
     error.value = e?.data?.statusMessage === 'Code already used' ? 'That code was just used. Wait for the next one (it changes every 30 seconds).' : e?.data?.statusMessage === 'Invalid code' ? 'That code is not right.' : needPassword.value ? 'Wrong password.' : 'Could not unlock.'
     unlockCode.value = ''
     unlockStep.value = firstStep.value
+  } finally {
+    unlocking.value = false
   }
 }
 
@@ -149,12 +153,21 @@ provide('signOut', logout)
           </svg>
         </span>
       </div>
-      <form class="lock-card mt-8 space-y-3" @submit.prevent="unlock">
-        <input v-if="showPw" id="unlock-pw" v-model="unlockPw" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password" class="field text-center" required>
-        <input v-if="showCode" id="unlock-code" v-model="unlockCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="Authenticator code" aria-label="Authenticator code" class="field text-center tracking-[0.2em]" required>
-        <p v-if="error" class="alert-error text-sm">{{ error }}</p>
-        <button class="sr-only">Unlock</button>
-        <p class="pt-1 text-xs text-slate-400">Press Enter to {{ unlockStep === 'password' && needUnlockCode ? 'continue' : 'unlock' }}</p>
+      <form class="lock-card mt-7" @submit.prevent="unlock">
+        <p class="mb-3 text-sm text-slate-500">
+          <template v-if="unlockStep === 'password'">{{ needUnlockCode ? 'Step 1 of 2 · ' : '' }}Enter your password</template>
+          <template v-else>{{ needPassword ? 'Step 2 of 2 · ' : '' }}Enter the 6-digit code from your authenticator app</template>
+        </p>
+        <div class="relative">
+          <input v-if="showPw" id="unlock-pw" v-model="unlockPw" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password" class="field !py-3 pr-14 text-center" required>
+          <input v-if="showCode" id="unlock-code" v-model="unlockCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456" aria-label="Authenticator code" class="field !py-3 pr-14 text-center tracking-[0.3em]" required>
+          <button type="submit" class="absolute right-1.5 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-full bg-brand-600 text-white transition hover:bg-brand-700 disabled:opacity-50" :disabled="unlocking" :aria-label="unlockStep === 'password' && needUnlockCode ? 'Continue' : 'Unlock'">
+            <svg v-if="!unlocking" viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14" /><path d="M13 6l6 6-6 6" /></svg>
+            <svg v-else viewBox="0 0 24 24" class="size-5 animate-spin" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 109 9" /></svg>
+          </button>
+        </div>
+        <p v-if="error" class="alert-error mt-3 text-sm">{{ error }}</p>
+        <button v-if="unlockStep === 'code' && needPassword" type="button" class="mt-3 text-xs text-slate-400 hover:text-slate-600" @click="unlockStep = firstStep; unlockCode = ''">← Back</button>
       </form>
       <button type="button" class="mt-6 text-xs text-slate-400 hover:text-slate-600" @click="logout">Log out</button>
     </div>
