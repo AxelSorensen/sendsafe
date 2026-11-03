@@ -2,14 +2,14 @@
 useHead({ title: 'Settings | SendSafe' })
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
-const form = reactive({ displayName: '', requireTotp: true, unlockTotp: false, sessionMinutes: 720 })
+const form = reactive({ displayName: '', requireTotp: true, sessionMinutes: 720 })
 const saving = ref(false)
 const saved = ref(false)
 const error = ref('')
 
-const loaded = await $fetch<{ displayName: string, requireTotp: boolean, unlockTotp: boolean, totpConfirmed: boolean, sessionMinutes: number }>('/api/settings')
+const loaded = await $fetch<{ displayName: string, requireTotp: boolean, totpConfirmed: boolean, sessionMinutes: number }>('/api/settings')
 const totpConfirmed = ref(loaded.totpConfirmed)
-Object.assign(form, { displayName: loaded.displayName, requireTotp: loaded.requireTotp, unlockTotp: loaded.unlockTotp, sessionMinutes: loaded.sessionMinutes })
+Object.assign(form, { displayName: loaded.displayName, requireTotp: loaded.requireTotp, sessionMinutes: loaded.sessionMinutes })
 // "Stay logged in for": three quick choices, or a custom length in minutes, hours or days.
 const PRESETS = [1, 5, 30]
 const UNIT_MIN = { minutes: 1, hours: 60, days: 1440 } as const
@@ -142,11 +142,11 @@ async function toggleSharing() {
       <label class="flex cursor-pointer items-start gap-3">
         <input v-model="form.requireTotp" type="checkbox" class="mt-1 size-4 accent-brand-600">
         <span>
-          <span class="block text-sm font-medium text-slate-800">Require authenticator code at every login</span>
-          <span class="mt-0.5 block text-xs text-slate-500">Turn off to log in with your password only. This is less secure: anyone with your password can get in.</span>
+          <span class="block text-sm font-medium text-slate-800">Require authenticator code to unlock your safe</span>
+          <span class="mt-0.5 block text-xs text-slate-500">Asked every time you log in and every time you unlock after locking. Turn off to use your password only. This is less secure: anyone with your password can get in.</span>
         </span>
       </label>
-      <p v-if="!form.requireTotp" class="alert-warn mt-3 text-xs">Two-factor login is off. Your password is the only protection for your files.</p>
+      <p v-if="!form.requireTotp" class="alert-warn mt-3 text-xs">Two-factor is off. Your password is the only thing asked when you log in or unlock.</p>
     </div>
 
 </template>
@@ -166,24 +166,6 @@ async function toggleSharing() {
       </div>
       <p v-if="!enroll && enrollError" class="alert-error mt-3">{{ enrollError }}</p>
     </div>
-    <div>
-      <p class="label">Unlock a locked safe with</p>
-      <div role="radiogroup" aria-label="Unlock a locked safe with" class="inline-flex max-w-full flex-wrap gap-1 rounded-xl bg-slate-100 p-1">
-        <button
-          v-for="o in [{ v: false, l: 'Password' }, { v: true, l: 'Password + code' }]"
-          :key="String(o.v)" type="button" role="radio" :aria-checked="form.unlockTotp === o.v"
-          :disabled="o.v && !totpConfirmed"
-          class="rounded-lg px-3.5 py-1.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50"
-          :class="form.unlockTotp === o.v ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
-          @click="form.unlockTotp = o.v"
-        >{{ o.l }}</button>
-      </div>
-      <p class="mt-1 text-xs text-slate-500">
-        What Lock safe asks for when you come back. Your password is always needed, because it is what unlocks your files; a code alone cannot.
-        <template v-if="!totpConfirmed"> Set up an authenticator above to add a code.</template>
-      </p>
-    </div>
-
     <p v-if="error" class="alert-error">{{ error }}</p>
     <div class="flex items-center justify-end gap-3">
       <Transition name="saved">
