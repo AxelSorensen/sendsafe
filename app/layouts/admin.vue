@@ -91,8 +91,17 @@ const loadUnlockMode = async () => {
 }
 watch(isLocked, (l) => { if (l) loadUnlockMode() }, { immediate: true })
 
+// One question at a time: password first, then the code when both are needed.
+const unlockStep = ref<'password' | 'code'>('password')
+const firstStep = computed<'password' | 'code'>(() => (needPassword.value ? 'password' : 'code'))
+const showPw = computed(() => unlockStep.value === 'password' && needPassword.value)
+const showCode = computed(() => unlockStep.value === 'code' && needUnlockCode.value)
+watch([isLocked, firstStep], ([l]) => { if (l) unlockStep.value = firstStep.value }, { immediate: true })
+watch([unlockStep, isLocked], () => nextTick(() => document.getElementById(showPw.value ? 'unlock-pw' : 'unlock-code')?.focus()), { flush: 'post' })
+
 async function unlock() {
   error.value = ''
+  if (unlockStep.value === 'password' && needUnlockCode.value) { unlockStep.value = 'code'; return }
   try {
     const v = await $fetch<{ salt: string, wrappedPrivateKey: string, wrapIv: string }>('/api/auth/unlock', { method: 'POST', body: { code: unlockCode.value } })
     if (needPassword.value) {
@@ -104,6 +113,8 @@ async function unlock() {
     unlockCode.value = ''
   } catch (e: any) {
     error.value = e?.data?.statusMessage === 'Invalid code' ? 'That code is not right.' : needPassword.value ? 'Wrong password.' : 'Could not unlock.'
+    unlockCode.value = ''
+    unlockStep.value = firstStep.value
   }
 }
 
@@ -132,11 +143,11 @@ provide('signOut', logout)
         </svg>
       </div>
       <form class="lock-card mt-8 space-y-3" @submit.prevent="unlock">
-        <input v-if="needPassword" id="unlock-pw" v-model="unlockPw" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password" class="field text-center" autofocus required>
-        <input v-if="needUnlockCode" id="unlock-code" v-model="unlockCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="Authenticator code" aria-label="Authenticator code" class="field text-center tracking-[0.2em]" :autofocus="!needPassword" required>
+        <input v-if="showPw" id="unlock-pw" v-model="unlockPw" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password" class="field text-center" required>
+        <input v-if="showCode" id="unlock-code" v-model="unlockCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="Authenticator code" aria-label="Authenticator code" class="field text-center tracking-[0.2em]" required>
         <p v-if="error" class="alert-error text-sm">{{ error }}</p>
         <button class="sr-only">Unlock</button>
-        <p class="pt-1 text-xs text-slate-400">Press Enter to unlock</p>
+        <p class="pt-1 text-xs text-slate-400">Press Enter to {{ unlockStep === 'password' && needUnlockCode ? 'continue' : 'unlock' }}</p>
       </form>
       <button type="button" class="mt-6 text-xs text-slate-400 hover:text-slate-600" @click="logout">Log out</button>
     </div>
