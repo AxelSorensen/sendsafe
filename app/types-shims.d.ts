@@ -1,0 +1,5 @@
+declare module '@vue-office/excel/lib/v3/vue-office-excel.mjs'
+declare module '@vue-office/docx/lib/v3/vue-office-docx.mjs'
+declare module '@vue-office/pptx/lib/v3/vue-office-pptx.mjs'
+declare module '@vue-office/excel/lib/v3/index.css'
+declare module '@vue-office/docx/lib/v3/index.css'

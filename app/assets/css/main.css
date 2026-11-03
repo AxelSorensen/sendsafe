@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+/* Light only: dark: variants apply only under a .dark class, which is never set. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+}
+
+@layer base {
+  html { @apply antialiased; color-scheme: light; overscroll-behavior: none; }
+  body { @apply bg-white font-sans text-slate-900; }
+  ::selection { @apply bg-brand-100; }
+}
+
+@layer components {
+  .card { @apply rounded-xl border border-slate-200 bg-white; }
+  .field {
+    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition
+      placeholder:text-slate-400 focus:border-brand-600 focus:ring-4 focus:ring-brand-600/10;
+  }
+  .label { @apply mb-1.5 block text-sm font-medium text-slate-700; }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white transition
+      hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition
+      hover:bg-slate-100 hover:text-slate-900 disabled:opacity-40;
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 transition
+      hover:bg-red-50 hover:text-red-600 disabled:opacity-40;
+  }
+  .badge-active { @apply inline-flex items-center rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700; }
+  .badge-off { @apply inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-500; }
+  .alert-error { @apply rounded-lg bg-red-50 px-3.5 py-2.5 text-sm text-red-700; }
+  .alert-warn { @apply rounded-xl border border-brand-100 bg-brand-50 px-4 py-3.5 text-sm text-slate-700; }
+}
+
+/* Desktop app: the blue title strip takes space, so full-height boxes must not overflow the window. */
+#__nuxt .min-h-screen { min-height: calc(100vh - var(--titlebar, 0px)); }
