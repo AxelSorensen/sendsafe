@@ -45,3 +45,8 @@
 
 /* Desktop app: the blue title strip takes space, so full-height boxes must not overflow the window. */
 #__nuxt .min-h-screen { min-height: calc(100vh - var(--titlebar, 0px)); }
+
+/* Soft arrival for full-page screens such as login. */
+.fade-in { animation: fade-in .35s ease-out both; }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .fade-in { animation: none; } }

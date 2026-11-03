@@ -3,7 +3,7 @@ defineProps<{ title: string, subtitle?: string }>()
 </script>
 
 <template>
-  <main class="grid min-h-screen place-items-center px-4 py-12">
+  <main class="fade-in grid min-h-screen place-items-center px-4 py-12">
     <div class="w-full max-w-md">
       <div class="mb-8 flex justify-center"><BrandLogo /></div>
       <div class="card p-7 sm:p-8">

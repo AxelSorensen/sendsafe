@@ -42,8 +42,11 @@ async function unlock() {
   }
 }
 
+// Show a short "Signing out" screen so the switch to the login page is not abrupt.
+const signingOut = ref(false)
 async function logout() {
-  await $fetch('/api/auth/logout', { method: 'POST' })
+  signingOut.value = true
+  await Promise.all([$fetch('/api/auth/logout', { method: 'POST' }).catch(() => {}), new Promise(r => setTimeout(r, 900))])
   lock()
   await navigateTo('/login')
 }
@@ -105,6 +108,14 @@ async function logout() {
       </div>
     </aside>
     <Onboarding v-if="showTour && privateKey" @done="finishTour" />
+    <Transition name="so">
+      <div v-if="signingOut" class="fixed inset-0 z-[60] grid place-items-center bg-white" role="status" aria-live="polite">
+        <div class="flex flex-col items-center gap-4">
+          <svg viewBox="0 0 24 24" class="size-9 animate-spin text-brand-600" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 109 9" /></svg>
+          <p class="text-sm font-medium text-slate-600">Signing out…</p>
+        </div>
+      </div>
+    </Transition>
     <main class="flex min-h-0 min-w-0 flex-1 flex-col p-4 lg:p-6" :class="!isSettings && 'pb-20 lg:pb-6'">
       <div class="flex min-h-0 flex-1 flex-col gap-6">
         <NuxtLink v-if="isSettings" to="/admin" class="btn-ghost shrink-0 self-start !bg-slate-100 !px-3 hover:!bg-slate-200">
@@ -118,3 +129,8 @@ async function logout() {
     </main>
   </div>
 </template>
+
+<style scoped>
+.so-enter-active { transition: opacity .25s ease; }
+.so-enter-from { opacity: 0; }
+</style>
