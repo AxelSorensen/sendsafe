@@ -34,16 +34,46 @@ Preferred-Languages: en
 Canonical: https://sendsafe-relay.sendsafe.workers.dev/.well-known/security.txt
 `
 
+const DL_BASE = 'https://github.com/AxelSorensen/sendsafe/releases/latest/download'
+
 const HOME = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SendSafe</title><meta name="description" content="Send and receive sensitive files safely. End-to-end encrypted.">
+<title>Download SendSafe</title><meta name="description" content="Download SendSafe for Mac and Windows. Send and receive sensitive files safely, end-to-end encrypted.">
 <meta name="robots" content="noindex"><meta name="theme-color" content="#dbeafe">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f8fafc;color:#0f172a;font:16px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
-main{max-width:26rem;padding:2rem;text-align:center}img{width:72px;height:72px}h1{margin:.75rem 0 .25rem;font-size:1.6rem}p{color:#475569;margin:.5rem 0 1.5rem}
-a{display:inline-block;background:#2563eb;color:#fff;text-decoration:none;font-weight:600;padding:.7rem 1.2rem;border-radius:.75rem}</style></head>
-<body><main><img src="/favicon.svg" alt="" width="72" height="72"><h1>SendSafe</h1>
-<p>Send and receive sensitive files safely. Everything is encrypted before it leaves your device.</p>
-<a href="https://github.com/AxelSorensen/sendsafe/releases/latest">Get SendSafe</a></main></body></html>`
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f8fafc;color:#0f172a;font:16px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:44rem;margin:0 auto;padding:3rem 1.25rem 4rem}
+header{text-align:center}header img{width:72px;height:72px}h1{margin:.6rem 0 .3rem;font-size:2rem;letter-spacing:-.02em}
+.lead{color:#475569;margin:0 auto;max-width:30rem}
+.grid{display:grid;gap:1rem;margin-top:2rem;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr))}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:1rem;padding:1.25rem;text-align:center;display:flex;flex-direction:column;gap:.35rem}
+.card.rec{border-color:#2563eb;box-shadow:0 0 0 3px #dbeafe}
+.card h2{margin:0;font-size:1.05rem}.card small{color:#64748b;min-height:2.6em}
+.tag{display:none;align-self:center;background:#dbeafe;color:#1d4ed8;font-size:.7rem;font-weight:700;padding:.1rem .55rem;border-radius:99px}
+.rec .tag{display:inline-block}
+a.btn{margin-top:.5rem;display:inline-block;background:#2563eb;color:#fff;text-decoration:none;font-weight:600;padding:.65rem 1rem;border-radius:.7rem}
+a.btn:hover{background:#1d4ed8}
+section{margin-top:2.25rem;background:#fff;border:1px solid #e2e8f0;border-radius:1rem;padding:1.25rem 1.5rem}
+section h3{margin:0 0 .5rem;font-size:1rem}section ol,section ul{margin:.25rem 0 0;padding-left:1.2rem;color:#334155}section li{margin:.3rem 0}
+.note{color:#64748b;font-size:.85rem;margin-top:1.5rem;text-align:center}
+</style></head>
+<body><main>
+<header><img src="/favicon.svg" alt="" width="72" height="72"><h1>Download SendSafe</h1>
+<p class="lead">Send and receive sensitive files safely. Everything is encrypted before it leaves your device, and only the recipient can open it.</p></header>
+<div class="grid">
+<div class="card" id="mac-arm"><span class="tag">Recommended for you</span><h2>Mac · Apple silicon</h2><small>M1, M2, M3, M4 and newer (most Macs since 2020)</small><a class="btn" href="${DL_BASE}/SendSafe-mac-arm.dmg">Download for Mac</a></div>
+<div class="card" id="mac-intel"><span class="tag">Recommended for you</span><h2>Mac · Intel</h2><small>Older Macs with an Intel processor</small><a class="btn" href="${DL_BASE}/SendSafe-mac-intel.dmg">Download for Intel Mac</a></div>
+<div class="card" id="win"><span class="tag">Recommended for you</span><h2>Windows</h2><small>Windows 10 and 11, 64-bit</small><a class="btn" href="${DL_BASE}/SendSafe-windows.exe">Download for Windows</a></div>
+</div>
+<section><h3>Not sure which Mac you have?</h3><p style="margin:0;color:#334155">Click the Apple menu, then About This Mac. If it says Chip: Apple M1 (or M2, M3, M4), choose Apple silicon. If it says Processor: Intel, choose Intel.</p></section>
+<section><h3>Installing on a Mac</h3><ol><li>Open the downloaded <b>SendSafe</b> file.</li><li>Drag SendSafe into the <b>Applications</b> folder.</li><li>Open SendSafe from Applications. If macOS says it can't verify the app, right-click it, choose <b>Open</b>, then <b>Open</b> again.</li></ol></section>
+<section><h3>Installing on Windows</h3><ol><li>Run the downloaded installer.</li><li>If Windows shows "Windows protected your PC", click <b>More info</b>, then <b>Run anyway</b>.</li></ol></section>
+<p class="note">SendSafe stays in your menu bar or tray and starts when you log in, so uploads reach you even when the window is closed.</p>
+</main>
+<script>
+(function(){var ua=navigator.userAgent,id=/Windows/.test(ua)?'win':(/Mac/.test(ua)&&!/iPhone|iPad/.test(ua))?'mac-arm':null;
+if(id){var el=document.getElementById(id);if(el){el.classList.add('rec');var g=el.parentNode;g.insertBefore(el,g.firstChild)}}})();
+</script></body></html>`
 
 class HttpError extends Error { constructor(public status: number, msg: string) { super(msg) } }
 
@@ -252,7 +282,7 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
   if (/^\/u\/[A-Za-z0-9_-]+\/?$/.test(path)) return env.ASSETS.fetch(new Request(new URL('/200.html', url), { method: 'GET', headers: req.headers }))
   if (path.startsWith('/_nuxt/') || ['/favicon.ico', '/favicon.svg', '/apple-touch-icon.png', '/og.png', '/robots.txt'].includes(path)) return env.ASSETS.fetch(req)
   if (path === '/.well-known/security.txt') return new Response(SECURITY_TXT, { headers: { 'content-type': 'text/plain; charset=utf-8' } })
-  if (path === '/' && (req.method === 'GET' || req.method === 'HEAD')) return new Response(HOME, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=300' } })
+  if ((path === '/' || path === '/download') && (req.method === 'GET' || req.method === 'HEAD')) return new Response(HOME, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=300' } })
 
   throw new HttpError(404, 'Not found')
 }

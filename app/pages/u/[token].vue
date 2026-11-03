@@ -179,14 +179,8 @@ function onDrop(e: DragEvent) {
 useHead({ title: 'Send files securely' })
 
 // Latest installers (built by .github/workflows/release.yml). The GitHub repo must be public for visitors to download.
-const RELEASES = 'https://github.com/AxelSorensen/sendsafe/releases/latest'
-const DL = `${RELEASES}/download`
-const ua = import.meta.client ? navigator.userAgent : ''
-const isMac = /Mac/.test(ua) && !/iPhone|iPad/.test(ua)
-const isWin = /Windows/.test(ua)
-// Direct file downloads (fixed names are uploaded by the release workflow). Unknown systems get the releases page.
-const INSTALL_URL = isMac ? `${DL}/SendSafe-mac-arm.dmg` : isWin ? `${DL}/SendSafe-windows.exe` : RELEASES
-const INTEL_URL = `${DL}/SendSafe-mac-intel.dmg`
+// Download page hosted by the relay (same origin), listing Mac (Apple silicon / Intel) and Windows.
+const INSTALL_URL = '/download'
 </script>
 
 <template>
@@ -303,10 +297,7 @@ const INTEL_URL = `${DL}/SendSafe-mac-intel.dmg`
         <p class="text-sm font-semibold text-slate-900">Want to send and receive files safely too?</p>
         <p class="mt-0.5 text-xs text-slate-500">Get SendSafe for your computer. Free, end-to-end encrypted.</p>
       </div>
-      <div class="shrink-0 text-center">
-        <a :href="INSTALL_URL" class="btn !py-2 !text-sm">Install SendSafe</a>
-        <a v-if="isMac" :href="INTEL_URL" class="mt-1 block text-[11px] text-slate-500 hover:underline">Intel Mac? Download this one</a>
-      </div>
+      <a :href="INSTALL_URL" target="_blank" rel="noopener" class="btn shrink-0 !py-2 !text-sm">Install SendSafe</a>
     </div>
   </main>
 </template>
