@@ -6,7 +6,7 @@ const steps = [
   { title: 'Welcome to SendSafe', body: 'Receive files privately. Everything is encrypted, and only you can open it.' },
   { title: 'Share your link', body: 'Copy your link from the Inbox and send it to the person with files for you. Only the link goes out, never the files.' },
   { title: 'Files arrive here', body: 'They upload through your link, encrypted in their browser. New files land in your Inbox and you get a notification. Keep SendSafe running to receive them.' },
-  { title: 'Only you can open them', body: 'Your password and authenticator code unlock your files. We cannot reset your password, so keep it somewhere safe.' }
+  { title: 'Safe even if your computer is stolen', body: 'Your files are encrypted with a key that only your password unlocks, so whoever has the computer sees nothing readable. We cannot reset your password, so keep it somewhere safe.' }
 ]
 const last = computed(() => step.value === steps.length - 1)
 </script>
