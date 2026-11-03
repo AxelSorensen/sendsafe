@@ -66,21 +66,35 @@ provide('signOut', logout)
 </script>
 
 <template>
-  <AuthShell v-if="!privateKey" title="Safe locked" subtitle="Enter your password to unlock your documents.">
-    <form class="space-y-4" @submit.prevent="unlock">
-      <div>
-        <label class="label" for="unlock-pw">Password</label>
-        <input id="unlock-pw" v-model="unlockPw" type="password" autocomplete="current-password" class="field" autofocus required>
+  <!-- Locked: a full blue screen with a padlock that clicks shut when you arrive here. -->
+  <main v-if="!privateKey" class="lock-screen fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-gradient-to-br from-brand-600 to-brand-700 px-4 py-10">
+    <div class="w-full max-w-sm">
+      <div class="lock-icon mx-auto mb-6 grid size-20 place-items-center rounded-full bg-white/15 text-white ring-1 ring-white/25">
+        <svg viewBox="0 0 24 24" class="size-10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path class="shackle" d="M8 11V8a4 4 0 118 0v3" />
+          <rect class="lock-body" x="5" y="11" width="14" height="9" rx="2" fill="currentColor" fill-opacity=".25" />
+        </svg>
       </div>
-      <div v-if="needUnlockCode">
-        <label class="label" for="unlock-code">Authenticator code</label>
-        <input id="unlock-code" v-model="unlockCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456" class="field tracking-[0.3em]" required>
+      <div class="lock-card rounded-2xl bg-white p-7 shadow-2xl">
+        <h1 class="text-xl font-semibold tracking-tight">Safe locked</h1>
+        <p class="mt-1.5 text-sm leading-relaxed text-slate-500">Enter your password to unlock your documents.</p>
+        <form class="mt-6 space-y-4" @submit.prevent="unlock">
+          <div>
+            <label class="label" for="unlock-pw">Password</label>
+            <input id="unlock-pw" v-model="unlockPw" type="password" autocomplete="current-password" class="field" autofocus required>
+          </div>
+          <div v-if="needUnlockCode">
+            <label class="label" for="unlock-code">Authenticator code</label>
+            <input id="unlock-code" v-model="unlockCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456" class="field tracking-[0.3em]" required>
+          </div>
+          <p v-if="error" class="alert-error">{{ error }}</p>
+          <button class="btn w-full">Unlock</button>
+          <button type="button" class="btn-ghost w-full" @click="logout">Log out</button>
+        </form>
       </div>
-      <p v-if="error" class="alert-error">{{ error }}</p>
-      <button class="btn w-full">Unlock</button>
-      <button type="button" class="btn-ghost w-full" @click="logout">Log out</button>
-    </form>
-  </AuthShell>
+      <p class="mt-6 text-center text-xs text-white/70">SendSafe · end-to-end encrypted</p>
+    </div>
+  </main>
 
   <div v-else class="flex h-[calc(100dvh-var(--titlebar,0px))] flex-col overflow-hidden lg:flex-row">
     <aside v-if="!isSettings" class="flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1 bg-slate-100 px-3 py-2 lg:w-60 lg:flex-col lg:flex-nowrap lg:items-stretch lg:gap-4 lg:p-4">
@@ -147,6 +161,16 @@ provide('signOut', logout)
 </template>
 
 <style scoped>
+.lock-screen { animation: lock-bg .35s ease-out both; }
+@keyframes lock-bg { from { opacity: 0; } to { opacity: 1; } }
+/* The shackle drops into the body, then the whole lock gives a small bounce. */
+.shackle { animation: shackle .6s cubic-bezier(.3, 1.5, .5, 1) .3s both; }
+@keyframes shackle { from { transform: translateY(-4px); } to { transform: translateY(0); } }
+.lock-icon { animation: lock-pop .45s ease-out .85s both; }
+@keyframes lock-pop { 0% { transform: scale(1); } 50% { transform: scale(1.12); } 100% { transform: scale(1); } }
+.lock-card { animation: lock-card .5s ease-out .1s both; }
+@keyframes lock-card { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
 .so-enter-active { transition: opacity .25s ease; }
 .so-enter-from { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .lock-screen, .shackle, .lock-icon, .lock-card { animation: none !important; } }
 </style>
