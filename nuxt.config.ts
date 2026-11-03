@@ -11,7 +11,6 @@ export default defineNuxtConfig({
     head: {
       htmlAttrs: { lang: 'en' },
       title: 'SendSafe',
-      titleTemplate: t => (t && t !== 'SendSafe' ? `${t} · SendSafe` : 'SendSafe'),
       viewport: 'width=device-width, initial-scale=1, viewport-fit=cover',
       meta: [
         { name: 'theme-color', content: '#dbeafe' },

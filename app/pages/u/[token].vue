@@ -176,7 +176,7 @@ function onDrop(e: DragEvent) {
   if (e.dataTransfer?.files) stage(e.dataTransfer.files)
 }
 
-useHead({ title: 'Send files securely' })
+useHead({ title: 'Send files securely · SendSafe' })
 
 // Latest installers (built by .github/workflows/release.yml). The GitHub repo must be public for visitors to download.
 // Download page hosted by the relay (same origin), listing Mac (Apple silicon / Intel) and Windows.
