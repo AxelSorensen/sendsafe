@@ -72,7 +72,7 @@ provide('signOut', logout)
   <main v-if="!privateKey" class="lock-screen fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-gradient-to-br from-brand-50 to-brand-100 px-4 py-10">
     <div class="w-full max-w-sm">
       <div class="lock-icon mx-auto mb-6 grid size-20 place-items-center rounded-full bg-white text-brand-600 shadow-sm ring-1 ring-brand-100">
-        <svg viewBox="0 0 24 24" class="size-10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <svg viewBox="0 0 24 24" class="size-10 overflow-visible" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path class="shackle" d="M8 11V8a4 4 0 118 0v3" />
           <rect class="lock-body" x="5" y="11" width="14" height="9" rx="2" fill="currentColor" fill-opacity=".25" />
         </svg>
