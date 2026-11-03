@@ -56,10 +56,13 @@ export interface OwnerRow {
   created_at: number
 }
 
+// A login lasts 12 hours at most; the safe also locks itself after a period of inactivity (Settings).
+const SESSION_MINUTES = 12 * 60
+
 export function createSession(event: H3Event, verified: boolean): string {
   const db = useDb()
   db.prepare('DELETE FROM sessions WHERE expires_at < ?').run(Date.now())
-  const sessionMs = (getOwner()?.session_minutes ?? 720) * 60_000
+  const sessionMs = SESSION_MINUTES * 60_000
   const token = randomBytes(32).toString('base64url')
   db.prepare('INSERT INTO sessions (id_hash, verified, expires_at) VALUES (?, ?, ?)')
     .run(sha256(token), verified ? 1 : 0, Date.now() + sessionMs)

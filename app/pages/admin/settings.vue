@@ -2,27 +2,14 @@
 useHead({ title: 'Settings | SendSafe' })
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
-const form = reactive({ displayName: '', requireTotp: true, sessionMinutes: 720, autoLockMinutes: 15, unlockMode: 'password' })
+const form = reactive({ displayName: '', requireTotp: true, autoLockMinutes: 15, unlockMode: 'password' })
 const saving = ref(false)
 const saved = ref(false)
 const error = ref('')
 
-const loaded = await $fetch<{ displayName: string, requireTotp: boolean, unlockMode: string, autoLockMinutes: number, totpConfirmed: boolean, sessionMinutes: number }>('/api/settings')
+const loaded = await $fetch<{ displayName: string, requireTotp: boolean, unlockMode: string, autoLockMinutes: number, totpConfirmed: boolean }>('/api/settings')
 const totpConfirmed = ref(loaded.totpConfirmed)
-Object.assign(form, { displayName: loaded.displayName, requireTotp: loaded.requireTotp, autoLockMinutes: loaded.autoLockMinutes, unlockMode: loaded.unlockMode, sessionMinutes: loaded.sessionMinutes })
-// "Stay logged in for": three quick choices, or a custom length in minutes, hours or days.
-const PRESETS = [1, 5, 30]
-const UNIT_MIN = { minutes: 1, hours: 60, days: 1440 } as const
-type Unit = keyof typeof UNIT_MIN
-const mins = form.sessionMinutes
-const mode = ref(PRESETS.includes(mins) ? String(mins) : 'custom')
-const unit = ref<Unit>(mins % 1440 === 0 ? 'days' : mins % 60 === 0 ? 'hours' : 'minutes')
-const customVal = ref(Math.max(1, Math.round(mins / UNIT_MIN[unit.value])))
-watch([mode, customVal, unit], () => {
-  form.sessionMinutes = mode.value === 'custom'
-    ? Math.min(Math.max(Math.floor(Number(customVal.value) || 1), 1) * UNIT_MIN[unit.value], 60 * 24 * 30)
-    : Number(mode.value)
-})
+Object.assign(form, { displayName: loaded.displayName, requireTotp: loaded.requireTotp, autoLockMinutes: loaded.autoLockMinutes, unlockMode: loaded.unlockMode })
 // Adding two-factor later (when it was skipped at setup). Nothing changes until the first code is confirmed; Cancel leaves it as it was.
 const enroll = ref<{ secret: string, qr: string } | null>(null)
 const enrollCode = ref('')
@@ -111,31 +98,6 @@ async function toggleSharing() {
       <label class="label" for="st-name">Your name</label>
       <input id="st-name" v-model="form.displayName" type="text" maxlength="80" class="field" placeholder="e.g. Jane Smith" required>
       <p class="mt-1 text-xs text-slate-500">Shown to people who open your sharing link.</p>
-    </div>
-
-    <div>
-      <label class="label" for="st-session">Stay logged in for</label>
-      <div id="st-session" role="radiogroup" aria-label="Stay logged in for" class="inline-flex max-w-full flex-wrap gap-1 rounded-xl bg-slate-100 p-1">
-        <button
-          v-for="o in [{ v: '1', l: '1 minute' }, { v: '5', l: '5 minutes' }, { v: '30', l: '30 minutes' }, { v: 'custom', l: 'Custom' }]"
-          :key="o.v" type="button" role="radio" :aria-checked="mode === o.v"
-          class="rounded-lg px-3.5 py-1.5 text-sm font-medium transition"
-          :class="mode === o.v ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
-          @click="mode = o.v"
-        >{{ o.l }}</button>
-      </div>
-      <div v-if="mode === 'custom'" class="mt-3 flex flex-wrap items-center gap-2">
-        <input v-model.number="customVal" type="number" min="1" class="field w-24" aria-label="Custom length">
-        <div role="radiogroup" aria-label="Unit" class="inline-flex gap-1 rounded-xl bg-slate-100 p-1">
-          <button
-            v-for="u in ['minutes', 'hours', 'days']" :key="u" type="button" role="radio" :aria-checked="unit === u"
-            class="rounded-lg px-3 py-1.5 text-sm font-medium transition"
-            :class="unit === u ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
-            @click="unit = u as Unit"
-          >{{ u }}</button>
-        </div>
-      </div>
-      <p class="mt-1 text-xs text-slate-500">Applies from your next login.</p>
     </div>
 
     <div>
