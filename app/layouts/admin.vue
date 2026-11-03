@@ -54,20 +54,21 @@ async function logout() {
   </AuthShell>
 
   <div v-else class="flex h-[calc(100dvh-var(--titlebar,0px))] flex-col overflow-hidden lg:flex-row">
-    <aside v-if="!isSettings" class="flex shrink-0 items-center gap-2 bg-slate-100 px-3 py-2 lg:w-60 lg:flex-col lg:items-stretch lg:gap-4 lg:p-4">
+    <aside v-if="!isSettings" class="flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1 bg-slate-100 px-3 py-2 lg:w-60 lg:flex-col lg:flex-nowrap lg:items-stretch lg:gap-4 lg:p-4">
       <div class="shrink-0 px-2 py-1"><BrandLogo /></div>
-      <nav class="flex flex-row gap-1 lg:flex-1 lg:flex-col">
-        <NuxtLink to="/admin" class="btn-ghost !justify-start gap-3 " active-class="!bg-brand-100 !text-brand-700 font-semibold" exact>
+      <!-- Narrow window: tabs get their own row under the logo. -->
+      <nav class="order-last flex w-full flex-row gap-1 lg:order-none lg:w-auto lg:flex-1 lg:flex-col">
+        <NuxtLink to="/admin" class="btn-ghost flex-1 !justify-center gap-2 lg:flex-none lg:!justify-start lg:gap-3" active-class="!bg-brand-100 !text-brand-700 font-semibold" exact>
           <svg viewBox="0 0 24 24" class="size-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2" /><path d="M5.5 5.1L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.5-6.9A2 2 0 0016.8 4H7.2a2 2 0 00-1.7 1.1z" /></svg>
           Inbox
         </NuxtLink>
         <span
           v-for="t in soon" :key="t.label"
-          class="btn-ghost !justify-start cursor-not-allowed gap-3 !text-slate-400 hover:!bg-transparent hover:!text-slate-400"
+          class="btn-ghost flex-1 cursor-not-allowed !justify-center gap-2 !text-slate-400 hover:!bg-transparent hover:!text-slate-400 lg:flex-none lg:!justify-start lg:gap-3"
           aria-disabled="true" :title="`${t.label}: coming soon`"
         >
           <svg viewBox="0 0 24 24" class="size-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path v-for="d in t.icon" :key="d" :d="d" /></svg>
-          <span class="sr-only lg:not-sr-only">{{ t.label }}</span>
+          <span>{{ t.label }}</span>
           <span class="ml-auto hidden rounded-full bg-slate-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 lg:inline">Soon</span>
         </span>
       </nav>
