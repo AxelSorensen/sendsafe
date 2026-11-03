@@ -66,16 +66,16 @@ provide('signOut', logout)
 </script>
 
 <template>
-  <!-- Locked: a full blue screen with a padlock that clicks shut when you arrive here. -->
-  <main v-if="!privateKey" class="lock-screen fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-gradient-to-br from-brand-600 to-brand-700 px-4 py-10">
+  <!-- Locked: a soft blue screen with a padlock that clicks shut when you arrive here. -->
+  <main v-if="!privateKey" class="lock-screen fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-gradient-to-br from-brand-50 to-brand-100 px-4 py-10">
     <div class="w-full max-w-sm">
-      <div class="lock-icon mx-auto mb-6 grid size-20 place-items-center rounded-full bg-white/15 text-white ring-1 ring-white/25">
+      <div class="lock-icon mx-auto mb-6 grid size-20 place-items-center rounded-full bg-white text-brand-600 shadow-sm ring-1 ring-brand-100">
         <svg viewBox="0 0 24 24" class="size-10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path class="shackle" d="M8 11V8a4 4 0 118 0v3" />
           <rect class="lock-body" x="5" y="11" width="14" height="9" rx="2" fill="currentColor" fill-opacity=".25" />
         </svg>
       </div>
-      <div class="lock-card rounded-2xl bg-white p-7 shadow-2xl">
+      <div class="lock-card rounded-2xl border border-slate-200 bg-white p-7 shadow-xl shadow-brand-600/5">
         <h1 class="text-xl font-semibold tracking-tight">Safe locked</h1>
         <p class="mt-1.5 text-sm leading-relaxed text-slate-500">Enter your password to unlock your documents.</p>
         <form class="mt-6 space-y-4" @submit.prevent="unlock">
@@ -92,7 +92,7 @@ provide('signOut', logout)
           <button type="button" class="btn-ghost w-full" @click="logout">Log out</button>
         </form>
       </div>
-      <p class="mt-6 text-center text-xs text-white/70">SendSafe · end-to-end encrypted</p>
+      <p class="mt-6 text-center text-xs text-slate-400">SendSafe · end-to-end encrypted</p>
     </div>
   </main>
 
