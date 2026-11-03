@@ -45,11 +45,10 @@ const HOME = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta n
 main{width:100%;max-width:28rem;padding:2rem 1.25rem;text-align:center}
 img{width:80px;height:80px}h1{margin:1rem 0 .4rem;font-size:1.9rem;letter-spacing:-.02em}
 .lead{margin:0 auto 1.75rem;color:#475569}
-.btns{display:flex;flex-direction:column;gap:.6rem}
-a.btn{display:flex;flex-direction:column;align-items:center;justify-content:center;height:4rem;white-space:nowrap;background:#2563eb;color:#fff;text-decoration:none;font-weight:600;padding:0 1rem;border-radius:.8rem}
-a.btn:hover{background:#1d4ed8}a.btn.intel{background:#bfdbfe;color:#1e3a8a}a.btn.intel:hover{background:#93c5fd}a.btn.win{background:#475569}a.btn.win:hover{background:#334155}a.btn small{display:block;font-weight:400;font-size:.78rem;opacity:.85}
-.os{display:none}body[data-os=mac] .os-mac,body[data-os=win] .os-win,body:not([data-os]) .os{display:flex}
-.other{margin-top:1.5rem;font-size:.85rem;color:#64748b}.other a{color:#2563eb;text-decoration:none;margin:0 .35rem}.other a:hover{text-decoration:underline}
+a.btn{display:flex;flex-direction:column;align-items:center;justify-content:center;height:4.25rem;white-space:nowrap;background:#2563eb;color:#fff;text-decoration:none;font-weight:600;font-size:1.1rem;padding:0 1rem;border-radius:.9rem;box-shadow:0 6px 16px -6px rgba(37,99,235,.55)}
+a.btn:hover{background:#1d4ed8}a.btn small{display:block;font-weight:400;font-size:.8rem;opacity:.85}
+.pick{margin-top:1rem;font-size:.85rem;color:#64748b}
+select{margin-left:.4rem;font:inherit;font-size:.85rem;color:#0f172a;background:#fff;border:1px solid #cbd5e1;border-radius:.6rem;padding:.4rem .6rem;cursor:pointer}
 details{margin-top:1.75rem;text-align:left;font-size:.88rem;color:#475569;border-top:1px solid #e2e8f0;padding-top:1rem}
 summary{cursor:pointer;color:#0f172a;font-weight:600}details p{margin:.6rem 0 0}
 code{background:#f1f5f9;padding:.1rem .35rem;border-radius:.35rem;font-size:.8rem}
@@ -58,12 +57,12 @@ code{background:#f1f5f9;padding:.1rem .35rem;border-radius:.35rem;font-size:.8re
 <img src="/favicon.svg" alt="" width="80" height="80">
 <h1>SendSafe</h1>
 <p class="lead">Send and receive files safely. Encrypted before it leaves your device.</p>
-<div class="btns">
-<a class="btn os os-mac" href="${DL_BASE}/SendSafe-mac-arm.dmg">Download for Mac<small>Apple silicon</small></a>
-<a class="btn os os-mac intel" href="${DL_BASE}/SendSafe-mac-intel.dmg">Download for Mac<small>Intel</small></a>
-<a class="btn os os-win win" href="${DL_BASE}/SendSafe-windows.exe">Download for Windows<small>Windows 10 / 11</small></a>
-</div>
-<p class="other" id="other"></p>
+<a class="btn" id="dl" href="${DL_BASE}/SendSafe-mac-arm.dmg"><span id="dlt">Download for Mac</span><small id="dls">Apple silicon</small></a>
+<p class="pick"><label for="os">Other platforms:</label><select id="os">
+<option value="mac-arm">Mac · Apple silicon</option>
+<option value="mac-intel">Mac · Intel</option>
+<option value="win">Windows 10 / 11</option>
+</select></p>
 <details><summary>Help installing</summary>
 <p><b>Which Mac?</b> Apple menu, About This Mac. "Chip: Apple M…" means Apple silicon, "Processor: Intel" means Intel.</p>
 <p><b>Mac:</b> open the file, drag SendSafe to Applications, then open it. If macOS says it can't verify it, click Done, open System Settings, Privacy &amp; Security, scroll down and click <b>Open Anyway</b> next to SendSafe (older macOS: right-click the app, choose Open). If it says "damaged", run <code>xattr -cr /Applications/SendSafe.app</code> in Terminal.</p>
@@ -71,12 +70,11 @@ code{background:#f1f5f9;padding:.1rem .35rem;border-radius:.35rem;font-size:.8re
 </details>
 </main>
 <script>
-(function(){var ua=navigator.userAgent,os=/Windows/.test(ua)?'win':(/Mac/.test(ua)&&!/iPhone|iPad/.test(ua))?'mac':'';
-if(os)document.body.setAttribute('data-os',os);
-var B='${DL_BASE}',o=document.getElementById('other'),l=[];
-if(os!=='mac')l.push('<a href="'+B+'/SendSafe-mac-arm.dmg">Mac (Apple silicon)</a><a href="'+B+'/SendSafe-mac-intel.dmg">Mac (Intel)</a>');
-if(os!=='win')l.push('<a href="'+B+'/SendSafe-windows.exe">Windows</a>');
-if(os)o.innerHTML='Also for: '+l.join(' ')})();
+(function(){var B='${DL_BASE}',P={'mac-arm':['Download for Mac','Apple silicon','/SendSafe-mac-arm.dmg'],'mac-intel':['Download for Mac','Intel','/SendSafe-mac-intel.dmg'],'win':['Download for Windows','Windows 10 / 11','/SendSafe-windows.exe']};
+var sel=document.getElementById('os'),dl=document.getElementById('dl');
+function set(k){var p=P[k];document.getElementById('dlt').textContent=p[0];document.getElementById('dls').textContent=p[1];dl.href=B+p[2];sel.value=k}
+var ua=navigator.userAgent;set(/Windows/.test(ua)?'win':'mac-arm');
+sel.addEventListener('change',function(){set(sel.value)})})();
 </script></body></html>`
 
 class HttpError extends Error { constructor(public status: number, msg: string) { super(msg) } }
