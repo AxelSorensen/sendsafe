@@ -48,30 +48,39 @@ async function logout() {
     </form>
   </AuthShell>
 
-  <div v-else class="flex min-h-[calc(100vh-var(--titlebar,0px))] flex-col md:h-[calc(100vh-var(--titlebar,0px))] md:flex-row md:overflow-hidden">
-    <aside v-if="!isSettings" class="flex shrink-0 flex-col gap-2 bg-slate-100 p-3 md:gap-4 md:p-4 md:sticky md:top-[var(--titlebar,0px)] md:h-[calc(100vh-var(--titlebar,0px))] md:w-60">
-      <div class="px-2 py-1"><BrandLogo /></div>
-      <nav class="flex flex-row gap-1 md:flex-1 md:flex-col">
+  <div v-else class="flex h-[calc(100dvh-var(--titlebar,0px))] flex-col overflow-hidden lg:flex-row">
+    <aside v-if="!isSettings" class="flex shrink-0 items-center gap-2 bg-slate-100 px-3 py-2 lg:w-60 lg:flex-col lg:items-stretch lg:gap-4 lg:p-4">
+      <div class="shrink-0 px-2 py-1"><BrandLogo /></div>
+      <nav class="flex flex-row gap-1 lg:flex-1 lg:flex-col">
         <NuxtLink to="/admin" class="btn-ghost !justify-start gap-3 " active-class="!bg-brand-100 !text-brand-700 font-semibold" exact>
           <svg viewBox="0 0 24 24" class="size-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2" /><path d="M5.5 5.1L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.5-6.9A2 2 0 0016.8 4H7.2a2 2 0 00-1.7 1.1z" /></svg>
           Inbox
         </NuxtLink>
       </nav>
-      <div class="flex items-center gap-2 px-2 text-xs text-slate-600" :title="tunnel.status === 'running' ? tunnel.url : tunnel.error">
+      <div class="ml-auto flex shrink-0 items-center gap-2 px-2 text-xs text-slate-600 lg:ml-0" :title="tunnel.status === 'running' ? tunnel.url : tunnel.error">
         <span class="size-2 shrink-0 rounded-full" :class="!tunnel.enabled ? 'bg-slate-400' : tunnel.status === 'running' ? 'bg-brand-500' : tunnel.status === 'error' ? 'bg-red-500' : 'animate-pulse bg-slate-400'" />
-        <span v-if="!tunnel.enabled">Sharing server off</span>
-        <span v-else-if="tunnel.status === 'running'">Public link online</span>
-        <span v-else-if="tunnel.status === 'error'">Public link failed · <button class="underline" @click="retryTunnel">retry</button></span>
-        <span v-else>Connecting public link…</span>
+        <span class="hidden sm:inline" v-if="!tunnel.enabled">Sharing server off</span>
+        <span class="hidden sm:inline" v-else-if="tunnel.status === 'running'">Public link online</span>
+        <span class="hidden sm:inline" v-else-if="tunnel.status === 'error'">Public link failed · <button class="underline" @click="retryTunnel">retry</button></span>
+        <span class="hidden sm:inline" v-else>Connecting public link…</span>
       </div>
-      <div class="flex flex-row gap-2 md:flex-col">
-          <NuxtLink to="/admin/settings" class="inline-flex w-full flex-1 items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50" active-class="!bg-brand-100 !text-brand-700">Settings
-          </NuxtLink>
-          <button class="btn w-full flex-1" @click="logout">Log out</button>
+      <!-- Narrow window: two small icon buttons in the top bar. -->
+      <div class="flex shrink-0 items-center gap-0.5 lg:hidden">
+        <NuxtLink to="/admin/settings" class="btn-ghost !p-2" title="Settings" aria-label="Settings">
+          <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z" /></svg>
+        </NuxtLink>
+        <button type="button" class="btn-ghost !p-2" title="Log out" aria-label="Log out" @click="logout">
+          <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></svg>
+        </button>
+      </div>
+      <!-- Wide window: full buttons in the sidebar. -->
+      <div class="hidden shrink-0 flex-col gap-2 lg:flex">
+        <NuxtLink to="/admin/settings" class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50" active-class="!bg-brand-100 !text-brand-700">Settings</NuxtLink>
+        <button class="btn w-full" @click="logout">Log out</button>
       </div>
     </aside>
     <Onboarding v-if="showTour && privateKey" @done="finishTour" />
-    <main class="flex min-h-0 min-w-0 flex-1 flex-col p-4 md:p-6">
+    <main class="flex min-h-0 min-w-0 flex-1 flex-col p-4 lg:p-6">
       <div class="flex min-h-0 flex-1 flex-col gap-6" :class="isSettings ? 'mx-auto w-full max-w-2xl' : ''">
         <NuxtLink v-if="isSettings" to="/admin" class="btn-ghost shrink-0 self-start !px-3">
           <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
