@@ -17,7 +17,7 @@ jobs:
         include:
           - os: macos-14      # Apple silicon
             args: ''
-          - os: macos-13      # Intel
+          - os: macos-15-intel      # Intel
             args: ''
           - os: windows-latest
             args: ''
@@ -62,7 +62,7 @@ jobs:
           echo "$PATHS" | tr -d '[]"' | tr ',' '\n' > paths.txt
           while read -r p; do
             if [ "$OSNAME" = macos-14 ] && [[ "$p" == *.dmg ]]; then cp "$p" fixed/SendSafe-mac-arm.dmg; fi
-            if [ "$OSNAME" = macos-13 ] && [[ "$p" == *.dmg ]]; then cp "$p" fixed/SendSafe-mac-intel.dmg; fi
+            if [ "$OSNAME" = macos-15-intel ] && [[ "$p" == *.dmg ]]; then cp "$p" fixed/SendSafe-mac-intel.dmg; fi
             if [ "$OSNAME" = windows-latest ] && [[ "$p" == *-setup.exe ]]; then cp "$p" fixed/SendSafe-windows.exe; fi
           done < paths.txt
           ls fixed
