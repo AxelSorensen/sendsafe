@@ -1,6 +1,8 @@
 <script setup lang="ts">
 const { privateKey, lock } = useVault()
 const unlockPw = ref('')
+const unlockCode = ref('')
+const needUnlockCode = ref(false)
 const error = ref('')
 const { tunnel, init: initTunnel, retry: retryTunnel } = useTunnel()
 const showTour = ref(false)
@@ -32,15 +34,22 @@ const soon = [
 ]
 const isSettings = computed(() => useRoute().path.startsWith('/admin/settings'))
 
+// When the safe is locked, find out whether this account wants a code to unlock it.
+watch(privateKey, async (k) => {
+  if (k) return
+  try { needUnlockCode.value = (await $fetch<{ unlockTotp: boolean }>('/api/settings')).unlockTotp } catch { needUnlockCode.value = false }
+}, { immediate: true })
+
 async function unlock() {
   error.value = ''
   try {
-    const v = await $fetch<{ salt: string, wrappedPrivateKey: string, wrapIv: string }>('/api/auth/vault')
+    const v = await $fetch<{ salt: string, wrappedPrivateKey: string, wrapIv: string }>('/api/auth/unlock', { method: 'POST', body: { code: unlockCode.value } })
     const { wrapKey } = await deriveKeys(unlockPw.value, v.salt)
     privateKey.value = await unlockPrivateKey(wrapKey, v.wrappedPrivateKey, v.wrapIv)
     unlockPw.value = ''
-  } catch {
-    error.value = 'Wrong password.'
+    unlockCode.value = ''
+  } catch (e: any) {
+    error.value = e?.data?.statusMessage === 'Invalid code' ? 'That code is not right.' : 'Wrong password.'
   }
 }
 
@@ -62,6 +71,10 @@ provide('signOut', logout)
       <div>
         <label class="label" for="unlock-pw">Password</label>
         <input id="unlock-pw" v-model="unlockPw" type="password" autocomplete="current-password" class="field" autofocus required>
+      </div>
+      <div v-if="needUnlockCode">
+        <label class="label" for="unlock-code">Authenticator code</label>
+        <input id="unlock-code" v-model="unlockCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456" class="field tracking-[0.3em]" required>
       </div>
       <p v-if="error" class="alert-error">{{ error }}</p>
       <button class="btn w-full">Unlock</button>

@@ -43,6 +43,7 @@ export interface OwnerRow {
   display_name: string
   email: string
   totp_confirmed: number
+  unlock_totp: number
   require_totp: number
   sharing_enabled: number
   onboarded: number
