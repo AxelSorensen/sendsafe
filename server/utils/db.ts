@@ -108,7 +108,7 @@ export function listProfileIds(): string[] {
 export function listAccounts(): { id: string, name: string }[] {
   const out: { id: string, name: string }[] = []
   for (const id of listProfileIds()) {
-    const row = useDb(id).prepare('SELECT display_name FROM owner WHERE id = 1').get() as { display_name: string } | undefined
+    const row = useDb(id).prepare('SELECT display_name FROM owner WHERE id = 1 AND totp_enabled = 1').get() as { display_name: string } | undefined
     if (row) out.push({ id, name: row.display_name })
   }
   return out
@@ -118,7 +118,7 @@ export function listAccounts(): { id: string, name: string }[] {
 export function createProfile(): string {
   for (const id of listProfileIds()) {
     if (id === 'main') continue
-    const has = useDb(id).prepare('SELECT 1 AS x FROM owner WHERE id = 1').get()
+    const has = useDb(id).prepare('SELECT 1 AS x FROM owner WHERE id = 1 AND totp_enabled = 1').get()
     if (!has) { try { dbs.get(id)?.close() } catch { /* ignore */ } dbs.delete(id); rmSync(profileDir(id), { recursive: true, force: true }) }
   }
   const id = randomBytes(4).toString('hex')

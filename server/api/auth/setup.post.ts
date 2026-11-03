@@ -2,7 +2,13 @@ import QRCode from 'qrcode'
 
 export default defineEventHandler(async (event) => {
   rateLimit(`setup:${clientIp(event)}`, 10, 60 * 60 * 1000)
-  if (getOwner()) throw createError({ statusCode: 409, statusMessage: 'Already set up' })
+  const existing = getOwner()
+  if (existing?.totp_enabled) throw createError({ statusCode: 409, statusMessage: 'Already set up' })
+  // An earlier attempt that never got past the QR code has nothing in it yet (no login, no files): start over cleanly.
+  if (existing) {
+    useDb().prepare('DELETE FROM sessions').run()
+    useDb().prepare('DELETE FROM owner WHERE id = 1').run()
+  }
 
   const required = process.env.SENDSAFE_SETUP_TOKEN
   const body = await readBody(event)
