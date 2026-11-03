@@ -90,7 +90,7 @@ function backToCreds() {
       <form v-if="step === 'creds'" class="space-y-4" @submit.prevent="login">
         <div>
           <label class="label" for="em">Email</label>
-          <input id="em" v-model="email" type="email" autocomplete="username" placeholder="you@example.com" class="field" required @blur="lookup">
+          <input id="em" v-model="email" type="email" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="you@example.com" class="field" required @blur="lookup">
         </div>
         <div>
           <label class="label" for="pw">Password</label>
