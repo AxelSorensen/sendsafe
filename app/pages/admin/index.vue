@@ -1,4 +1,5 @@
 <script setup lang="ts">
+useHead({ title: 'Inbox | SendSafe' })
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
 interface FileRow { id: string, enc: string, size: number, created_at: number, link_label: string }

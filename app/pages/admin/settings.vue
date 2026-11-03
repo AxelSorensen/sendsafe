@@ -1,4 +1,5 @@
 <script setup lang="ts">
+useHead({ title: 'Settings | SendSafe' })
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
 const form = reactive({ displayName: '', requireTotp: true, sessionHours: 12 })

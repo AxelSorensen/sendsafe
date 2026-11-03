@@ -1,4 +1,5 @@
 <script setup lang="ts">
+useHead({ title: 'Log in | SendSafe' })
 const status = await $fetch<{ setup: boolean, requireTotp: boolean }>('/api/status')
 if (!status.setup) await navigateTo('/setup', { replace: true })
 

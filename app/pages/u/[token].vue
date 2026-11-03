@@ -1,4 +1,5 @@
 <script setup lang="ts">
+useHead({ title: 'Upload | SendSafe' })
 const route = useRoute()
 const token = String(route.params.token)
 

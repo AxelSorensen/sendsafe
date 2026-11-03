@@ -37,7 +37,7 @@ Canonical: https://sendsafe-relay.sendsafe.workers.dev/.well-known/security.txt
 const DL_BASE = 'https://github.com/AxelSorensen/sendsafe/releases/latest/download'
 
 const HOME = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Download SendSafe</title><meta name="description" content="Download SendSafe for Mac and Windows. Send and receive sensitive files safely, end-to-end encrypted.">
+<title>Download | SendSafe</title><meta name="description" content="Download SendSafe for Mac and Windows. Send and receive sensitive files safely, end-to-end encrypted.">
 <meta name="robots" content="noindex"><meta name="theme-color" content="#dbeafe">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <style>
