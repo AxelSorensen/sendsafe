@@ -172,8 +172,11 @@ provide('signOut', logout)
             <svg v-else viewBox="0 0 24 24" class="size-5 animate-spin" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 109 9" /></svg>
           </button>
         </div>
-        <p v-if="error" class="alert-error mt-3 text-sm">{{ error }}</p>
-        <button v-if="unlockStep === 'code' && needPassword" type="button" class="mt-3 text-xs text-slate-400 hover:text-slate-600" @click="unlockStep = firstStep; unlockCode = ''">← Back</button>
+        <p v-if="error" class="alert-error mt-4 text-sm">{{ error }}</p>
+        <button v-if="unlockStep === 'code' && needPassword" type="button" class="btn-ghost mx-auto mt-7 !gap-1.5 !px-4 !py-2 !text-slate-500" @click="unlockStep = firstStep; unlockCode = ''">
+          <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
+          Back
+        </button>
       </form>
       <button type="button" class="mt-6 text-xs text-slate-400 hover:text-slate-600" @click="logout">Log out</button>
     </div>
