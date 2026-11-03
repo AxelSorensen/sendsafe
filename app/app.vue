@@ -1,7 +1,12 @@
 <script setup lang="ts">
 // Inside the Tauri desktop app the native title bar is an overlay: paint our own blue strip under it.
 const inDesktop = ref(false)
+// The desktop window has no browser menu, so give it Cmd/Ctrl+R to reload.
+function onReloadKey(e: KeyboardEvent) {
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'r') { e.preventDefault(); location.reload() }
+}
 onMounted(() => {
+  window.addEventListener('keydown', onReloadKey)
   inDesktop.value = !!(window as any).__TAURI_INTERNALS__ && /Mac/.test(navigator.platform)
   document.documentElement.style.setProperty('--titlebar', inDesktop.value ? '2.25rem' : '0px')
 })

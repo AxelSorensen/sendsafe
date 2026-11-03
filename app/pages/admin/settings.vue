@@ -7,8 +7,9 @@ const saving = ref(false)
 const saved = ref(false)
 const error = ref('')
 
-const loaded = await $fetch<{ displayName: string, requireTotp: boolean, sessionMinutes: number }>('/api/settings')
-Object.assign(form, loaded)
+const loaded = await $fetch<{ displayName: string, requireTotp: boolean, totpConfirmed: boolean, sessionMinutes: number }>('/api/settings')
+const totpConfirmed = ref(loaded.totpConfirmed)
+Object.assign(form, { displayName: loaded.displayName, requireTotp: loaded.requireTotp, sessionMinutes: loaded.sessionMinutes })
 // "Stay logged in for": three quick choices, or a custom length in minutes, hours or days.
 const PRESETS = [1, 5, 30]
 const UNIT_MIN = { minutes: 1, hours: 60, days: 1440 } as const
@@ -22,6 +23,32 @@ watch([mode, customVal, unit], () => {
     ? Math.min(Math.max(Math.floor(Number(customVal.value) || 1), 1) * UNIT_MIN[unit.value], 60 * 24 * 30)
     : Number(mode.value)
 })
+// Adding two-factor later (when it was skipped at setup). Nothing changes until the first code is confirmed; Cancel leaves it as it was.
+const enroll = ref<{ secret: string, qr: string } | null>(null)
+const enrollCode = ref('')
+const enrollBusy = ref(false)
+const enrollError = ref('')
+async function startEnroll() {
+  enrollError.value = ''
+  enrollBusy.value = true
+  try { enroll.value = await $fetch('/api/auth/enroll', { method: 'POST' }) } catch (e: any) { enrollError.value = e?.data?.statusMessage || 'Could not start.' } finally { enrollBusy.value = false }
+}
+function cancelEnroll() { enroll.value = null; enrollCode.value = ''; enrollError.value = '' }
+async function confirmEnroll() {
+  enrollError.value = ''
+  enrollBusy.value = true
+  try {
+    await $fetch('/api/auth/enroll-confirm', { method: 'POST', body: { code: enrollCode.value } })
+    totpConfirmed.value = true
+    form.requireTotp = true
+    snapshot.value = JSON.stringify(form)
+    cancelEnroll()
+  } catch (e: any) {
+    enrollError.value = e?.data?.statusMessage === 'Invalid code' ? 'That code is not right. Try the current one.' : (e?.data?.statusMessage || 'Could not confirm.')
+  } finally {
+    enrollBusy.value = false
+  }
+}
 // Save is only enabled once something differs from what is stored.
 const snapshot = ref(JSON.stringify(form))
 const dirty = computed(() => JSON.stringify(form) !== snapshot.value)
@@ -109,6 +136,7 @@ async function toggleSharing() {
       <p class="mt-1 text-xs text-slate-500">Applies from your next login.</p>
     </div>
 
+<template v-if="totpConfirmed">
     <div>
       <label class="flex cursor-pointer items-start gap-3">
         <input v-model="form.requireTotp" type="checkbox" class="mt-1 size-4 accent-brand-600">
@@ -120,6 +148,23 @@ async function toggleSharing() {
       <p v-if="!form.requireTotp" class="alert-warn mt-3 text-xs">Two-factor login is off. Your password is the only protection for your files.</p>
     </div>
 
+</template>
+    <div v-else class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+      <p class="text-sm font-medium text-slate-800">Two-factor login is off</p>
+      <p class="mt-0.5 text-xs text-slate-500">Right now only your password protects your login. Add an authenticator app for a second step.</p>
+      <button v-if="!enroll" type="button" class="btn-ghost mt-3 !bg-white" :disabled="enrollBusy" @click="startEnroll">Set up authenticator</button>
+      <div v-else class="mt-4 space-y-3">
+        <img :src="enroll.qr" alt="Authenticator QR code" class="rounded-xl border border-slate-200 bg-white p-2">
+        <p class="break-all rounded-lg bg-white px-3 py-2 font-mono text-xs text-slate-500">{{ enroll.secret }}</p>
+        <input v-model="enrollCode" inputmode="numeric" maxlength="6" placeholder="123456" class="field max-w-48 tracking-[0.3em]" aria-label="Authenticator code" @keydown.enter.prevent="confirmEnroll">
+        <p v-if="enrollError" class="alert-error">{{ enrollError }}</p>
+        <div class="flex gap-2">
+          <button type="button" class="btn" :disabled="enrollBusy || enrollCode.length < 6" @click="confirmEnroll">Confirm</button>
+          <button type="button" class="btn-ghost" :disabled="enrollBusy" @click="cancelEnroll">Cancel</button>
+        </div>
+      </div>
+      <p v-if="!enroll && enrollError" class="alert-error mt-3">{{ enrollError }}</p>
+    </div>
     <p v-if="error" class="alert-error">{{ error }}</p>
     <div class="flex items-center justify-end gap-3">
       <Transition name="saved">

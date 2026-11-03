@@ -75,6 +75,8 @@ export function useDb(id: string = currentProfile()): DatabaseSync {
     for (const col of [
       "display_name TEXT NOT NULL DEFAULT ''",
       "email TEXT NOT NULL DEFAULT ''",
+      // 0 when two-factor was skipped at setup: no authenticator is enrolled yet, so the login must not ask for a code.
+      'totp_confirmed INTEGER NOT NULL DEFAULT 1',
       'require_totp INTEGER NOT NULL DEFAULT 1',
       'session_hours INTEGER NOT NULL DEFAULT 12',
       'sharing_enabled INTEGER NOT NULL DEFAULT 1',

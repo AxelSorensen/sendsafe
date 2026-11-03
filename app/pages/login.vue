@@ -1,18 +1,29 @@
 <script setup lang="ts">
 useHead({ title: 'Log in | SendSafe' })
 type Account = { id: string, name: string }
-const profiles = await $fetch<{ current: string, accounts: Account[] }>('/api/profiles')
-const accounts = ref(profiles.accounts)
-const current = ref(profiles.current)
-const status = ref(await $fetch<{ setup: boolean, requireTotp: boolean }>('/api/status'))
-// This account was never finished (e.g. an abandoned "create account"): fall back to one that exists, or to setup.
-if (!status.value.setup) {
-  if (accounts.value.length) {
-    await $fetch('/api/profiles/select', { method: 'POST', body: { id: accounts.value[0]!.id } })
-    current.value = accounts.value[0]!.id
+const accounts = ref<Account[]>([])
+const current = ref('main')
+const status = ref({ setup: true, requireTotp: true })
+const ready = ref(false)
+// Loaded after the page appears (a page that waits on data while mounting breaks hot reload and can crash on navigation).
+onMounted(async () => {
+  try {
+    const profiles = await $fetch<{ current: string, accounts: Account[] }>('/api/profiles')
+    accounts.value = profiles.accounts
+    current.value = profiles.current
     status.value = await $fetch('/api/status')
-  } else await navigateTo('/setup', { replace: true })
-}
+    // This account was never finished (e.g. an abandoned "create account"): fall back to one that exists, or to setup.
+    if (!status.value.setup) {
+      if (accounts.value.length) {
+        await $fetch('/api/profiles/select', { method: 'POST', body: { id: accounts.value[0]!.id } })
+        current.value = accounts.value[0]!.id
+        status.value = await $fetch('/api/status')
+      } else { await navigateTo('/setup', { replace: true }); return }
+    }
+  } finally {
+    ready.value = true
+  }
+})
 
 const { privateKey } = useVault()
 const password = ref('')
@@ -58,33 +69,35 @@ async function login() {
 
 <template>
   <AuthShell title="Welcome back" subtitle="Log in with your password and authenticator code. Your files are decrypted only in this browser.">
-    <div v-if="accounts.length > 1" class="mb-5 space-y-1.5">
-      <p class="label !mb-1">Account</p>
-      <button
-        v-for="a in accounts" :key="a.id" type="button"
-        class="flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left text-sm transition"
-        :class="a.id === current ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-slate-200 text-slate-700 hover:bg-slate-50'"
-        @click="pick(a.id)"
-      >
-        <span class="grid size-7 shrink-0 place-items-center rounded-full bg-brand-100 text-xs font-semibold text-brand-700">{{ (a.name || '?').trim().charAt(0).toUpperCase() }}</span>
-        <span class="truncate font-medium">{{ a.name || 'Unnamed account' }}</span>
-      </button>
-    </div>
-    <form class="space-y-4" @submit.prevent="login">
-      <div>
-        <label class="label" for="pw">Password</label>
-        <input id="pw" v-model="password" type="password" autocomplete="current-password" class="field" required>
+    <template v-if="ready">
+      <div v-if="accounts.length > 1" class="mb-5 space-y-1.5">
+        <p class="label !mb-1">Account</p>
+        <button
+          v-for="a in accounts" :key="a.id" type="button"
+          class="flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left text-sm transition"
+          :class="a.id === current ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-slate-200 text-slate-700 hover:bg-slate-50'"
+          @click="pick(a.id)"
+        >
+          <span class="grid size-7 shrink-0 place-items-center rounded-full bg-brand-100 text-xs font-semibold text-brand-700">{{ (a.name || '?').trim().charAt(0).toUpperCase() }}</span>
+          <span class="truncate font-medium">{{ a.name || 'Unnamed account' }}</span>
+        </button>
       </div>
-      <div v-if="status.requireTotp">
-        <label class="label" for="code">Authenticator code</label>
-        <input id="code" v-model="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456" class="field tracking-[0.3em]" :required="status.requireTotp">
-      </div>
-      <p v-if="error" class="alert-error">{{ error }}</p>
-      <button :disabled="busy" class="btn w-full">{{ busy ? 'Unlocking…' : 'Log in' }}</button>
-    </form>
-    <p class="mt-5 text-center text-sm text-slate-500">
-      Someone else?
-      <button type="button" class="font-medium text-brand-600 hover:underline" @click="addAccount">Create a new account</button>
-    </p>
+      <form class="space-y-4" @submit.prevent="login">
+        <div>
+          <label class="label" for="pw">Password</label>
+          <input id="pw" v-model="password" type="password" autocomplete="current-password" class="field" required>
+        </div>
+        <div v-if="status.requireTotp">
+          <label class="label" for="code">Authenticator code</label>
+          <input id="code" v-model="code" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456" class="field tracking-[0.3em]" :required="status.requireTotp">
+        </div>
+        <p v-if="error" class="alert-error">{{ error }}</p>
+        <button :disabled="busy" class="btn w-full">{{ busy ? 'Unlocking…' : 'Log in' }}</button>
+      </form>
+      <p class="mt-5 text-center text-sm text-slate-500">
+        Someone else?
+        <button type="button" class="font-medium text-brand-600 hover:underline" @click="addAccount">Create a new account</button>
+      </p>
+    </template>
   </AuthShell>
 </template>

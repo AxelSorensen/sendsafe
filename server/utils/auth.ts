@@ -42,6 +42,7 @@ export interface OwnerRow {
   totp_last_step: number
   display_name: string
   email: string
+  totp_confirmed: number
   require_totp: number
   sharing_enabled: number
   onboarded: number

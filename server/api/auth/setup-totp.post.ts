@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   const step = verifyTotp(owner.totp_secret, String(code ?? ''), 0)
   if (!step) throw createError({ statusCode: 400, statusMessage: 'Invalid code' })
   const db = useDb()
-  db.prepare('UPDATE owner SET totp_enabled = 1, totp_last_step = ? WHERE id = 1').run(step)
+  db.prepare('UPDATE owner SET totp_enabled = 1, totp_confirmed = 1, totp_last_step = ? WHERE id = 1').run(step)
   db.prepare('UPDATE sessions SET verified = 1 WHERE id_hash = ?').run(session.idHash)
   return { ok: true }
 })
