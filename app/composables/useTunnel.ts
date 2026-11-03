@@ -9,7 +9,7 @@ function apply(t: TunnelState) {
   tunnelUrl.value = t.status === 'running' ? t.url : ''
   const watching = t.enabled && (t.status === 'starting' || t.status === 'error')
   if (watching && !poll) {
-    poll = setInterval(async () => apply(await $fetch<TunnelState>('/api/tunnel')), 3000)
+    poll = setInterval(async () => { try { apply(await $fetch<TunnelState>('/api/tunnel')) } catch { /* logged out or offline: try again next tick */ } }, 3000)
   } else if (!watching && poll) {
     clearInterval(poll)
     poll = undefined
