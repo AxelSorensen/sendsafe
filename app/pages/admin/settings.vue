@@ -100,6 +100,36 @@ async function toggleSharing() {
       <p class="mt-1 text-xs text-slate-500">Shown to people who open your sharing link.</p>
     </div>
 
+<template v-if="totpConfirmed">
+    <div>
+      <label class="flex cursor-pointer items-start gap-3">
+        <input v-model="form.requireTotp" type="checkbox" class="mt-1 size-4 accent-brand-600">
+        <span>
+          <span class="block text-sm font-medium text-slate-800">Require authenticator code to log in</span>
+          <span class="mt-0.5 block text-xs text-slate-500">Asked every time you log in. Turn off to log in with your password only. This is less secure: anyone with your password can get in.</span>
+        </span>
+      </label>
+      <p v-if="!form.requireTotp" class="alert-warn mt-3 text-xs">Two-factor login is off. Your password is the only thing asked when you log in.</p>
+    </div>
+
+</template>
+    <div v-else class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+      <p class="text-sm font-medium text-slate-800">Two-factor authentication</p>
+      <p class="mt-0.5 text-xs text-slate-500">Off right now: only your password protects your login. Add an authenticator app for a second step.</p>
+      <button v-if="!enroll" type="button" class="btn mt-3" :disabled="enrollBusy" @click="startEnroll">Set up two-factor authentication</button>
+      <div v-else class="mt-4 space-y-3">
+        <img :src="enroll.qr" alt="Authenticator QR code" class="rounded-xl border border-slate-200 bg-white p-2">
+        <p class="break-all rounded-lg bg-white px-3 py-2 font-mono text-xs text-slate-500">{{ enroll.secret }}</p>
+        <input v-model="enrollCode" inputmode="numeric" maxlength="6" placeholder="123456" class="field max-w-48 tracking-[0.3em]" aria-label="Authenticator code" @keydown.enter.prevent="confirmEnroll">
+        <p v-if="enrollError" class="alert-error">{{ enrollError }}</p>
+        <div class="flex gap-2">
+          <button type="button" class="btn" :disabled="enrollBusy || enrollCode.length < 6" @click="confirmEnroll">Confirm</button>
+          <button type="button" class="btn-ghost" :disabled="enrollBusy" @click="cancelEnroll">Cancel</button>
+        </div>
+      </div>
+      <p v-if="!enroll && enrollError" class="alert-error mt-3">{{ enrollError }}</p>
+    </div>
+
     <div>
       <p class="label">Unlock a locked safe with</p>
       <div role="radiogroup" aria-label="Unlock a locked safe with" class="inline-flex max-w-full flex-wrap gap-1 rounded-xl bg-slate-100 p-1">
@@ -134,35 +164,6 @@ async function toggleSharing() {
       <p class="mt-1 text-xs text-slate-500">You get a few seconds of warning first and can keep using the app.</p>
     </div>
 
-<template v-if="totpConfirmed">
-    <div>
-      <label class="flex cursor-pointer items-start gap-3">
-        <input v-model="form.requireTotp" type="checkbox" class="mt-1 size-4 accent-brand-600">
-        <span>
-          <span class="block text-sm font-medium text-slate-800">Require authenticator code to log in</span>
-          <span class="mt-0.5 block text-xs text-slate-500">Asked every time you log in. Turn off to log in with your password only. This is less secure: anyone with your password can get in.</span>
-        </span>
-      </label>
-      <p v-if="!form.requireTotp" class="alert-warn mt-3 text-xs">Two-factor login is off. Your password is the only thing asked when you log in.</p>
-    </div>
-
-</template>
-    <div v-else class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-      <p class="text-sm font-medium text-slate-800">Two-factor login is off</p>
-      <p class="mt-0.5 text-xs text-slate-500">Right now only your password protects your login. Add an authenticator app for a second step.</p>
-      <button v-if="!enroll" type="button" class="btn-ghost mt-3 !bg-white" :disabled="enrollBusy" @click="startEnroll">Set up authenticator</button>
-      <div v-else class="mt-4 space-y-3">
-        <img :src="enroll.qr" alt="Authenticator QR code" class="rounded-xl border border-slate-200 bg-white p-2">
-        <p class="break-all rounded-lg bg-white px-3 py-2 font-mono text-xs text-slate-500">{{ enroll.secret }}</p>
-        <input v-model="enrollCode" inputmode="numeric" maxlength="6" placeholder="123456" class="field max-w-48 tracking-[0.3em]" aria-label="Authenticator code" @keydown.enter.prevent="confirmEnroll">
-        <p v-if="enrollError" class="alert-error">{{ enrollError }}</p>
-        <div class="flex gap-2">
-          <button type="button" class="btn" :disabled="enrollBusy || enrollCode.length < 6" @click="confirmEnroll">Confirm</button>
-          <button type="button" class="btn-ghost" :disabled="enrollBusy" @click="cancelEnroll">Cancel</button>
-        </div>
-      </div>
-      <p v-if="!enroll && enrollError" class="alert-error mt-3">{{ enrollError }}</p>
-    </div>
     <p v-if="error" class="alert-error">{{ error }}</p>
     <div class="flex items-center justify-end gap-3">
       <Transition name="saved">
