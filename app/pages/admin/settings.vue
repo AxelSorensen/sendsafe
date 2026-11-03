@@ -80,7 +80,7 @@ async function toggleSharing() {
 
     <div>
       <label class="label" for="st-name">Your name</label>
-      <input id="st-name" v-model="form.displayName" type="text" maxlength="80" class="field" placeholder="e.g. Jane Smith">
+      <input id="st-name" v-model="form.displayName" type="text" maxlength="80" class="field" placeholder="e.g. Jane Smith" required>
       <p class="mt-1 text-xs text-slate-500">Shown to people who open your sharing link.</p>
     </div>
 

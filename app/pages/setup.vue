@@ -29,6 +29,7 @@ let created: { kdfSalt: string, wrappedPrivateKey: string, wrapIv: string } | nu
 
 async function create() {
   error.value = ''
+  if (!displayName.value.trim()) return (error.value = 'Please enter your name.')
   if (password.value.length < 12) return (error.value = 'Use at least 12 characters.')
   if (password.value !== confirm.value) return (error.value = 'Passwords do not match.')
   busy.value = true
@@ -83,7 +84,7 @@ async function verify() {
       </div>
       <div>
         <label class="label" for="su-name">Your name</label>
-        <input id="su-name" v-model="displayName" type="text" maxlength="80" autocomplete="name" placeholder="e.g. Jane Smith" class="field">
+        <input id="su-name" v-model="displayName" type="text" maxlength="80" autocomplete="name" placeholder="e.g. Jane Smith" class="field" required>
         <p class="mt-1 text-xs text-slate-500">Shown in your authenticator app and to people who open your link.</p>
       </div>
       <div>

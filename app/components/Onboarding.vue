@@ -77,7 +77,7 @@ async function next() {
             <div :key="step" class="min-h-44">
               <h2 id="ob-title" class="text-xl font-semibold tracking-tight">{{ steps[step]!.title }}</h2>
               <p class="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-slate-500">{{ steps[step]!.body }}</p>
-              <input v-if="steps[step]!.name" v-model="name" type="text" maxlength="80" autocomplete="name" placeholder="e.g. Jane Smith" class="field mx-auto mt-4 max-w-xs text-center" @keydown.enter.prevent="next">
+              <input v-if="steps[step]!.name" v-model="name" type="text" maxlength="80" autocomplete="name" placeholder="e.g. Jane Smith" class="field mx-auto mt-4 max-w-xs text-center" @keydown.enter.prevent="name.trim() && next()">
             </div>
           </Transition>
         </div>
@@ -89,7 +89,7 @@ async function next() {
         <div class="flex items-center gap-2 px-6 pb-6 pt-5">
           <button v-if="step > 0" type="button" class="btn-ghost" @click="step--">Back</button>
           <button v-else type="button" class="btn-ghost" @click="emit('done')">Skip</button>
-          <button type="button" class="btn ml-auto min-w-28" @click="next" :disabled="saving">{{ last ? 'Get started' : step === 0 ? 'Start' : 'Next' }}</button>
+          <button type="button" class="btn ml-auto min-w-28" @click="next" :disabled="saving || (steps[step]!.name && !name.trim())">{{ last ? 'Get started' : step === 0 ? 'Start' : 'Next' }}</button>
         </div>
       </div>
     </div>
