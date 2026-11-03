@@ -59,13 +59,11 @@ jobs:
           OSNAME: ${{ matrix.os }}
         run: |
           mkdir -p fixed
-          echo "$PATHS" | tr -d '[]"' | tr ',' '\n' | while read -r p; do
-            [ -z "$p" ] && continue
-            case "$OSNAME" in
-              macos-14) [[ "$p" == *.dmg ]] && cp "$p" fixed/SendSafe-mac-arm.dmg ;;
-              macos-13) [[ "$p" == *.dmg ]] && cp "$p" fixed/SendSafe-mac-intel.dmg ;;
-              windows-latest) [[ "$p" == *-setup.exe ]] && cp "$p" fixed/SendSafe-windows.exe ;;
-            esac
-          done
+          echo "$PATHS" | tr -d '[]"' | tr ',' '\n' > paths.txt
+          while read -r p; do
+            if [ "$OSNAME" = macos-14 ] && [[ "$p" == *.dmg ]]; then cp "$p" fixed/SendSafe-mac-arm.dmg; fi
+            if [ "$OSNAME" = macos-13 ] && [[ "$p" == *.dmg ]]; then cp "$p" fixed/SendSafe-mac-intel.dmg; fi
+            if [ "$OSNAME" = windows-latest ] && [[ "$p" == *-setup.exe ]]; then cp "$p" fixed/SendSafe-windows.exe; fi
+          done < paths.txt
           ls fixed
           gh release upload "${{ github.ref_name }}" fixed/* --clobber
