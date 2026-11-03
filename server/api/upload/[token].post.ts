@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const id = randomUUID()
-  const path = join(FILES_DIR, `${id}.bin`)
+  const path = join(filesDir(), `${id}.bin`)
   let size = 0
   const counter = new Transform({
     transform(chunk, _enc, cb) {

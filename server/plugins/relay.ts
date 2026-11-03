@@ -1,16 +1,25 @@
-import { relayCreds, relayState, relayPing, relayTick, resetRelaySync } from '../utils/relay'
+import { relayCreds, relayState, relayTick } from '../utils/relay'
+
+// Keeps every account on this computer connected to the relay, so files arrive for all of them, not just the one logged in.
 export default defineNitroPlugin(() => {
   if (import.meta.prerender) return // `nuxt generate` must be able to exit
   let busy = false
   const timer = setInterval(async () => {
-    if (busy || !relayCreds()) return
+    if (busy) return
     busy = true
     try {
-      await relayTick()
-    } catch (e: any) {
-      relayState.ok = false
-      console.error('[relay]', e?.message || e)
-      relayState.error = e?.name === 'TimeoutError' ? 'The relay did not answer in time.' : (e?.message || 'Relay unreachable.')
+      for (const { id } of listAccounts()) {
+        await runAsProfile(id, async () => {
+          if (!relayCreds()) return
+          try {
+            await relayTick()
+          } catch (e: any) {
+            relayState.ok = false
+            console.error('[relay]', id, e?.message || e)
+            relayState.error = e?.name === 'TimeoutError' ? 'The relay did not answer in time.' : (e?.message || 'Relay unreachable.')
+          }
+        })
+      }
     } finally {
       busy = false
     }

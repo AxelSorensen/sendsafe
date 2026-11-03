@@ -1,6 +1,7 @@
 <script setup lang="ts">
 useHead({ title: 'Set up | SendSafe' })
 const status = await $fetch<{ setup: boolean, needsSetupToken: boolean }>('/api/status')
+const hasAccounts = ((await $fetch<{ accounts: unknown[] }>('/api/profiles')).accounts.length) > 0
 if (status.setup) await navigateTo('/login', { replace: true })
 
 const password = ref('')
@@ -97,6 +98,9 @@ async function verify() {
       </div>
       <p v-if="error" class="alert-error">{{ error }}</p>
       <button :disabled="busy" class="btn w-full">{{ busy ? 'Generating keys…' : 'Create safe' }}</button>
+      <p v-if="hasAccounts" class="text-center text-sm text-slate-500">
+        Already have an account? <NuxtLink to="/login" class="font-medium text-brand-600 hover:underline">Log in</NuxtLink>
+      </p>
     </form>
 
     <form v-else class="space-y-4" @submit.prevent="verify">

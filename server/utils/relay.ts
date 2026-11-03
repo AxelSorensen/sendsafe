@@ -9,7 +9,22 @@ import type { ReadableStream as NodeWebStream } from 'node:stream/web'
 // On first run the app registers itself (open sign-up) and keeps its own secret; nothing is typed in.
 // A WebSocket tells us the moment a file arrives, so there is no constant polling.
 
-export const relayState = { ok: false, error: '', syncedAt: 0 }
+interface PS { ok: boolean, error: string, syncedAt: number, lastSig: string, pulling: boolean, lastPull: number, ws: WebSocket | null, wsOpen: boolean, wsKey: string, wsRetryAt: number, wsFails: number, wsLastMsg: number }
+const states = new Map<string, PS>()
+// Every account on this computer has its own relay connection and state.
+const S = (): PS => {
+  const id = currentProfile()
+  let st = states.get(id)
+  if (!st) {
+    st = { ok: false, error: '', syncedAt: 0, lastSig: '', pulling: false, lastPull: 0, ws: null, wsOpen: false, wsKey: '', wsRetryAt: 0, wsFails: 0, wsLastMsg: 0 }
+    states.set(id, st)
+  }
+  return st
+}
+export const relayState = new Proxy({} as { ok: boolean, error: string, syncedAt: number }, {
+  get: (_, k) => (S() as any)[k],
+  set: (_, k, v) => { (S() as any)[k] = v; return true }
+})
 
 /** True when the relay address is built into the app (env), so users never enter anything. */
 export const relayManaged = () => !!process.env.SENDSAFE_RELAY_URL
@@ -57,15 +72,13 @@ async function ensureRegistered(url: string): Promise<Creds> {
   const { ownerId, secret } = await r.json() as { ownerId: string, secret: string }
   const token = `${ownerId}.${secret}`
   useDb().prepare('UPDATE owner SET relay_url = ?, relay_token = ? WHERE id = 1').run(url, token)
-  lastSig = ''
+  S().lastSig = ''
   return { url, token }
 }
 
-let lastSig = ''
-
 function forgetRegistration() {
   useDb().prepare("UPDATE owner SET relay_token = '' WHERE id = 1").run()
-  lastSig = ''
+  S().lastSig = ''
 }
 
 /** Push links/settings to the relay, but only when something changed. */
@@ -78,20 +91,18 @@ async function pushIfChanged(c: Creds) {
     maxFiles: l.max_files, maxBytes: l.max_bytes, revoked: l.revoked, localUsed: used.get(l.id) ?? 0
   }))
   const body = JSON.stringify({ enabled: !!o.sharing_enabled, displayName: o.display_name, links })
-  if (body === lastSig) return
+  if (body === S().lastSig) return
   const r = await call(c, '/owner/sync', { method: 'PUT', body, headers: { 'content-type': 'application/json' } })
   if (r.status === 404) { forgetRegistration(); throw new Error('The relay no longer knows this app. Signing up again.') }
   if (!r.ok) throw new Error(`Relay sync failed (${r.status})`)
-  lastSig = body
+  S().lastSig = body
 }
-
-let pulling = false
-let lastPull = 0
 
 /** Download any files waiting on the relay, then delete them there. */
 async function pull(c: Creds) {
-  if (pulling) return
-  pulling = true
+  const st = S()
+  if (st.pulling) return
+  st.pulling = true
   try {
     const db = useDb()
     let pulled = false
@@ -102,7 +113,7 @@ async function pull(c: Creds) {
       const have = db.prepare('SELECT id FROM files WHERE id = ?').get(f.id)
       const link = db.prepare('SELECT id FROM links WHERE id = ?').get(f.linkId)
       if (!have && link) {
-        const path = join(FILES_DIR, `${f.id}.bin`)
+        const path = join(filesDir(), `${f.id}.bin`)
         const res = await call(c, `/owner/files/${f.id}`)
         if (!res.ok || !res.body) continue
         try {
@@ -118,52 +129,48 @@ async function pull(c: Creds) {
       }
       await call(c, `/owner/files/${f.id}`, { method: 'DELETE' })
     }
-    lastPull = Date.now()
+    st.lastPull = Date.now()
     // The relay counts files per link to enforce limits; tell it the new total right away.
     if (pulled) await pushIfChanged(c).catch(() => {})
   } finally {
-    pulling = false
+    st.pulling = false
   }
 }
 
 // ---- live connection ----
-let ws: WebSocket | null = null
-let wsOpen = false
-let wsKey = ''
-let wsRetryAt = 0
-let wsFails = 0
-let wsLastMsg = 0
-
-function closeWs() {
-  try { ws?.close() } catch { /* already closed */ }
-  ws = null
-  wsOpen = false
+function closeWs(st: PS = S()) {
+  try { st.ws?.close() } catch { /* already closed */ }
+  st.ws = null
+  st.wsOpen = false
 }
 
 function ensureWs(c: Creds) {
+  const st = S()
+  const pid = currentProfile()
   const key = c.url + c.token
-  if (ws && wsKey !== key) closeWs()
-  if (ws) {
+  if (st.ws && st.wsKey !== key) closeWs(st)
+  if (st.ws) {
     // The relay answers our 'ping' with 'pong'. Silence for 70 s means the connection is dead.
-    if (wsOpen && Date.now() - wsLastMsg > 70_000) closeWs()
-    else if (wsOpen) { try { ws.send('ping') } catch { closeWs() } }
+    if (st.wsOpen && Date.now() - st.wsLastMsg > 70_000) closeWs(st)
+    else if (st.wsOpen) { try { st.ws.send('ping') } catch { closeWs(st) } }
     return
   }
-  if (Date.now() < wsRetryAt) return
-  wsKey = key
+  if (Date.now() < st.wsRetryAt) return
+  st.wsKey = key
   const sock = new (WebSocket as any)(c.url.replace(/^http/, 'ws') + '/owner/ws', { headers: { authorization: `Bearer ${c.token}` } }) as WebSocket
-  ws = sock
-  sock.onopen = () => { wsOpen = true; wsFails = 0; wsLastMsg = Date.now() }
+  st.ws = sock
+  sock.onopen = () => { st.wsOpen = true; st.wsFails = 0; st.wsLastMsg = Date.now() }
   sock.onmessage = (e: MessageEvent) => {
-    wsLastMsg = Date.now()
-    if (e.data === 'files' || e.data === 'hello') pull(c).catch(() => {})
+    st.wsLastMsg = Date.now()
+    // Socket callbacks run outside the request, so name the account explicitly.
+    if (e.data === 'files' || e.data === 'hello') runAsProfile(pid, () => pull(c)).catch(() => {})
   }
   const dropped = () => {
-    if (ws !== sock) return
-    ws = null
-    wsOpen = false
-    wsFails++
-    wsRetryAt = Date.now() + Math.min(2000 * 2 ** wsFails, 60_000)
+    if (st.ws !== sock) return
+    st.ws = null
+    st.wsOpen = false
+    st.wsFails++
+    st.wsRetryAt = Date.now() + Math.min(2000 * 2 ** st.wsFails, 60_000)
   }
   sock.onclose = dropped
   sock.onerror = dropped
@@ -178,16 +185,18 @@ export async function relayTick() {
   await pushIfChanged(c)
   ensureWs(c)
   // With a live connection we are told about new files. Without one, fall back to polling; a slow safety poll runs either way.
-  const every = wsOpen ? 120_000 : 10_000
-  if (Date.now() - lastPull > every) await pull(c)
+  const st = S()
+  const every = st.wsOpen ? 120_000 : 10_000
+  if (Date.now() - st.lastPull > every) await pull(c)
   relayState.ok = true
   relayState.error = ''
   relayState.syncedAt = Date.now()
 }
 
 export function resetRelaySync() {
-  lastSig = ''
-  closeWs()
-  relayState.ok = false
-  relayState.error = ''
+  const st = S()
+  st.lastSig = ''
+  closeWs(st)
+  st.ok = false
+  st.error = ''
 }
