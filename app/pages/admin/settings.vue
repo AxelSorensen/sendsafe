@@ -89,6 +89,7 @@ function goToSharing() {
 onMounted(() => setTimeout(goToSharing, 150))
 watch(() => route.hash, goToSharing)
 
+const { theme, set: setTheme } = useTheme()
 const openTour = inject<() => void>('openTour')
 const signOut = inject<() => void>('signOut')
 const toggling = ref(false)
@@ -211,6 +212,22 @@ async function toggleSharing() {
       <button class="btn" :disabled="saving || !dirty">{{ saving ? 'Saving…' : 'Save settings' }}</button>
     </div>
   </form>
+
+    <section class="card flex flex-col gap-3 p-6 sm:flex-row sm:items-center sm:justify-between">
+      <div class="min-w-0">
+        <h2 class="text-base font-semibold">Appearance</h2>
+        <p class="mt-1 text-sm text-slate-600">Light, dark, or match your computer.</p>
+      </div>
+      <div role="radiogroup" aria-label="Appearance" class="inline-flex shrink-0 gap-1 rounded-xl bg-slate-100 p-1">
+        <button
+          v-for="o in [{ v: 'light', l: 'Light' }, { v: 'dark', l: 'Dark' }, { v: 'system', l: 'System' }]"
+          :key="o.v" type="button" role="radio" :aria-checked="theme === o.v"
+          class="rounded-lg px-3.5 py-1.5 text-sm font-medium transition"
+          :class="theme === o.v ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'"
+          @click="setTheme(o.v as 'light' | 'dark' | 'system')"
+        >{{ o.l }}</button>
+      </div>
+    </section>
 
     <section class="card p-6">
       <h2 class="text-base font-semibold">Verification code</h2>

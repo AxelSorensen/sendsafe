@@ -13,6 +13,7 @@
   .sd-sub { font-size: 13px; color: #64748b; }
   .sd-bar { width: 140px; height: 4px; border-radius: 4px; background: #dbeafe; overflow: hidden; }
   .sd-bar span { display: block; width: 40%; height: 100%; border-radius: 4px; background: #2563eb; animation: sd-slide 1.1s ease-in-out infinite; }
+  @media (prefers-color-scheme: dark) { .sd-splash { background: #0b1120; color: #f1f5f9; } .sd-bar { background: #14264f; } .sd-sub { color: #94a3b8; } }
   @keyframes sd-slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(350%); } }
   @media (prefers-reduced-motion: reduce) { .sd-bar span { animation: none; width: 100%; } }
 </style>

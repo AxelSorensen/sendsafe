@@ -6,6 +6,7 @@ function onReloadKey(e: KeyboardEvent) {
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'r') { e.preventDefault(); location.reload() }
 }
 onMounted(() => {
+  useTheme().init()
   window.addEventListener('keydown', onReloadKey)
   inDesktop.value = !!(window as any).__TAURI_INTERNALS__ && /Mac/.test(navigator.platform)
   document.documentElement.style.setProperty('--titlebar', inDesktop.value ? '2.25rem' : '0px')
