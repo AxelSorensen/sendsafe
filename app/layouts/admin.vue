@@ -54,7 +54,7 @@ async function logout() {
   </AuthShell>
 
   <div v-else class="flex h-[calc(100dvh-var(--titlebar,0px))] flex-col overflow-hidden lg:flex-row">
-    <aside v-if="!isSettings" class="flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1 bg-slate-100 px-3 py-2 lg:w-60 lg:flex-col lg:flex-nowrap lg:items-stretch lg:gap-4 lg:p-4">
+    <aside :class="isSettings && 'lg:hidden'" class="flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1 bg-slate-100 px-3 py-2 lg:w-60 lg:flex-col lg:flex-nowrap lg:items-stretch lg:gap-4 lg:p-4">
       <div class="shrink-0 px-2 py-1"><BrandLogo /></div>
       <!-- Narrow window: tabs become a phone-style bar fixed to the bottom. -->
       <nav class="fixed inset-x-0 bottom-0 z-30 flex border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)] lg:static lg:flex-1 lg:flex-col lg:gap-1 lg:border-0 lg:bg-transparent lg:pb-0">
@@ -95,9 +95,9 @@ async function logout() {
       </div>
     </aside>
     <Onboarding v-if="showTour && privateKey" @done="finishTour" />
-    <main class="flex min-h-0 min-w-0 flex-1 flex-col p-4 lg:p-6" :class="!isSettings && 'pb-20 lg:pb-6'">
+    <main class="flex min-h-0 min-w-0 flex-1 flex-col p-4 lg:p-6" :class="'pb-20 lg:pb-6'">
       <div class="flex min-h-0 flex-1 flex-col gap-6">
-        <NuxtLink v-if="isSettings" to="/admin" class="btn-ghost shrink-0 self-start !px-3">
+        <NuxtLink v-if="isSettings" to="/admin" class="btn shrink-0 self-start !pl-3">
           <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
           Back to inbox
         </NuxtLink>
