@@ -158,10 +158,10 @@ provide('signOut', logout)
           <template v-if="unlockStep === 'password'">{{ needUnlockCode ? 'Step 1 of 2 · ' : '' }}Enter your password</template>
           <template v-else>{{ needPassword ? 'Step 2 of 2 · ' : '' }}Enter the 6-digit code from your authenticator app</template>
         </p>
-        <div class="relative">
-          <input v-if="showPw" id="unlock-pw" v-model="unlockPw" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password" class="field !py-3 pr-14 text-center" required>
-          <input v-if="showCode" id="unlock-code" v-model="unlockCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456" aria-label="Authenticator code" class="field !py-3 pr-14 text-center tracking-[0.3em]" required>
-          <button type="submit" class="absolute right-1.5 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-full bg-brand-600 text-white transition hover:bg-brand-700 disabled:opacity-50" :disabled="unlocking" :aria-label="unlockStep === 'password' && needUnlockCode ? 'Continue' : 'Unlock'">
+        <div class="flex items-center gap-2.5">
+          <input v-if="showPw" id="unlock-pw" v-model="unlockPw" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password" class="lock-input" required>
+          <input v-if="showCode" id="unlock-code" v-model="unlockCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="123456" aria-label="Authenticator code" class="lock-input tracking-[0.35em]" required>
+          <button type="submit" class="grid size-12 shrink-0 place-items-center rounded-xl bg-brand-600 text-white shadow-sm shadow-brand-600/30 transition hover:bg-brand-700 active:scale-95 disabled:opacity-50" :disabled="unlocking" :aria-label="unlockStep === 'password' && needUnlockCode ? 'Continue' : 'Unlock'">
             <svg v-if="!unlocking" viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14" /><path d="M13 6l6 6-6 6" /></svg>
             <svg v-else viewBox="0 0 24 24" class="size-5 animate-spin" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 109 9" /></svg>
           </button>
@@ -259,6 +259,10 @@ provide('signOut', logout)
 
 <style scoped>
 .lock-screen { animation: lock-bg .35s ease-out both; }
+/* Big, quiet, centered input: white, soft shadow, a clear blue ring when focused. */
+.lock-input { height: 3rem; min-width: 0; flex: 1 1 auto; border-radius: .75rem; border: 1px solid rgb(226 232 240); background: #fff; padding: 0 1rem; text-align: center; font-size: 1rem; color: rgb(15 23 42); box-shadow: 0 1px 2px rgb(15 23 42 / .06); outline: none; transition: border-color .15s, box-shadow .15s; }
+.lock-input::placeholder { color: rgb(148 163 184); letter-spacing: normal; }
+.lock-input:focus { border-color: rgb(37 99 235); box-shadow: 0 0 0 4px rgb(37 99 235 / .15); }
 @keyframes lock-bg { from { opacity: 0; } to { opacity: 1; } }
 /* The shackle drops into the body, then the whole lock gives a small bounce. */
 .shackle { animation: shackle .6s cubic-bezier(.3, 1.5, .5, 1) .3s both; }
