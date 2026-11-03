@@ -17,14 +17,10 @@ const last = computed(() => step.value === steps.length - 1)
       <div class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
         <div class="mx-6 mt-6 grid h-40 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-brand-50 to-slate-50 text-brand-600">
           <Transition name="ob" mode="out-in">
-          <!-- 0: welcome: the logo floats while rings pulse out from it -->
-          <svg v-if="step === 0" viewBox="0 0 300 120" class="h-full w-full" aria-hidden="true">
-            <circle class="ring" cx="150" cy="60" r="34" fill="none" stroke="currentColor" stroke-width="2" />
-            <circle class="ring ring2" cx="150" cy="60" r="34" fill="none" stroke="currentColor" stroke-width="2" />
-            <g class="float">
-              <rect x="120" y="30" width="60" height="60" rx="14" fill="#2563eb" />
-              <path d="M150 42a14 14 0 0 1 8.2 25.3l3.2 16a2.2 2.2 0 0 1-2.2 2.6h-18.4a2.2 2.2 0 0 1-2.2-2.6l3.2-16A14 14 0 0 1 150 42z" fill="#fff" />
-            </g>
+          <!-- 0: welcome: the plain logo, no motion -->
+          <svg v-if="step === 0" viewBox="100 100 824 824" class="size-20" aria-hidden="true">
+            <rect x="100" y="100" width="824" height="824" rx="185" fill="#2563eb" />
+            <path d="M512 232a190 190 0 0 1 112 344l44 218a30 30 0 0 1-30 36H386a30 30 0 0 1-30-36l44-218A190 190 0 0 1 512 232z" fill="#fff" transform="translate(512 512) scale(0.76) translate(-512 -531)" />
           </svg>
           <!-- 1: your link goes out as a message -->
           <svg v-else-if="step === 1" viewBox="0 0 300 120" class="h-full w-full" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -83,11 +79,6 @@ const last = computed(() => step.value === steps.length - 1)
 .bell { transform-box: fill-box; transform-origin: center; animation: pop 1.6s ease-in-out infinite; }
 .spark { animation: fade 2.4s ease-in-out infinite; }
 @keyframes fade { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
-.ring { transform-box: fill-box; transform-origin: center; animation: ring 2.4s ease-out infinite; opacity: 0; }
-.ring2 { animation-delay: 1.2s; }
-@keyframes ring { 0% { transform: scale(1); opacity: .5; } 100% { transform: scale(2.1); opacity: 0; } }
-.float { animation: float 3s ease-in-out infinite; }
-@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 .shake { transform-box: fill-box; transform-origin: center; animation: shake 2.4s ease-in-out infinite; }
 @keyframes shake { 0%, 60%, 100% { transform: translateX(0); } 68% { transform: translateX(-3px); } 76% { transform: translateX(3px); } 84% { transform: translateX(-2px); } 92% { transform: translateX(2px); } }
 .ob-enter-active, .ob-leave-active { transition: opacity .18s ease, transform .18s ease; }
