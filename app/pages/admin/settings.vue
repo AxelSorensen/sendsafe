@@ -123,9 +123,9 @@ async function toggleSharing() {
     <p v-if="error" class="alert-error">{{ error }}</p>
     <div class="flex items-center justify-end gap-3">
       <Transition name="saved">
-        <span v-if="saved" class="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1.5 text-sm font-medium text-brand-700" role="status">
-          <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>
-          Settings saved
+        <span v-if="saved" class="inline-flex items-center gap-1.5 text-sm text-slate-500" role="status">
+          <svg viewBox="0 0 24 24" class="size-4 text-brand-600" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>
+          Saved
         </span>
       </Transition>
       <button class="btn" :disabled="saving || !dirty">{{ saving ? 'Saving…' : 'Save settings' }}</button>
