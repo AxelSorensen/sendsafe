@@ -8,7 +8,32 @@ export default defineNuxtConfig({
   spaLoadingTemplate: true, // splash from app/spa-loading-template.html
   css: ['~/assets/css/main.css'],
   app: {
-    head: { viewport: 'width=device-width, initial-scale=1, viewport-fit=cover', meta: [{ name: 'theme-color', content: '#dbeafe' }] }
+    head: {
+      htmlAttrs: { lang: 'en' },
+      title: 'SendSafe',
+      titleTemplate: t => (t && t !== 'SendSafe' ? `${t} · SendSafe` : 'SendSafe'),
+      viewport: 'width=device-width, initial-scale=1, viewport-fit=cover',
+      meta: [
+        { name: 'theme-color', content: '#dbeafe' },
+        { name: 'description', content: 'SendSafe: send and receive sensitive files safely. Files are end-to-end encrypted in your browser and only the recipient can open them.' },
+        { name: 'application-name', content: 'SendSafe' },
+        { name: 'apple-mobile-web-app-title', content: 'SendSafe' },
+        { name: 'robots', content: 'noindex, nofollow, noarchive' },
+        { name: 'referrer', content: 'no-referrer' },
+        { name: 'color-scheme', content: 'light' },
+        { property: 'og:type', content: 'website' },
+        { property: 'og:site_name', content: 'SendSafe' },
+        { property: 'og:title', content: 'SendSafe: send files safely' },
+        { property: 'og:description', content: 'End-to-end encrypted file transfer. Only the recipient can open what you send.' },
+        { property: 'og:image', content: '/og.png' },
+        { name: 'twitter:card', content: 'summary' }
+      ],
+      link: [
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'icon', href: '/favicon.ico', sizes: 'any' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' }
+      ]
+    }
   },
   vite: {
     plugins: [tailwindcss()],

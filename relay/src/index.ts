@@ -24,8 +24,26 @@ const SEC: Record<string, string> = {
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
   'Cross-Origin-Opener-Policy': 'same-origin',
   'Cross-Origin-Resource-Policy': 'same-origin',
-  'Strict-Transport-Security': 'max-age=63072000; includeSubDomains'
+  'Strict-Transport-Security': 'max-age=63072000; includeSubDomains',
+  'X-Robots-Tag': 'noindex, nofollow, noarchive'
 }
+
+const SECURITY_TXT = `Contact: https://github.com/AxelSorensen/sendsafe/security/advisories/new
+Expires: 2027-11-01T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://sendsafe-relay.sendsafe.workers.dev/.well-known/security.txt
+`
+
+const HOME = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SendSafe</title><meta name="description" content="Send and receive sensitive files safely. End-to-end encrypted.">
+<meta name="robots" content="noindex"><meta name="theme-color" content="#dbeafe">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f8fafc;color:#0f172a;font:16px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:26rem;padding:2rem;text-align:center}img{width:72px;height:72px}h1{margin:.75rem 0 .25rem;font-size:1.6rem}p{color:#475569;margin:.5rem 0 1.5rem}
+a{display:inline-block;background:#2563eb;color:#fff;text-decoration:none;font-weight:600;padding:.7rem 1.2rem;border-radius:.75rem}</style></head>
+<body><main><img src="/favicon.svg" alt="" width="72" height="72"><h1>SendSafe</h1>
+<p>Send and receive sensitive files safely. Everything is encrypted before it leaves your device.</p>
+<a href="https://github.com/AxelSorensen/sendsafe/releases/latest">Get SendSafe</a></main></body></html>`
 
 class HttpError extends Error { constructor(public status: number, msg: string) { super(msg) } }
 
@@ -232,7 +250,9 @@ async function route(req: Request, env: Env, ctx: ExecutionContext): Promise<Res
 
   // Only the uploader page and its assets are public. The page shows its own "closed" screen when the API says so.
   if (/^\/u\/[A-Za-z0-9_-]+\/?$/.test(path)) return env.ASSETS.fetch(new Request(new URL('/200.html', url), { method: 'GET', headers: req.headers }))
-  if (path.startsWith('/_nuxt/') || path === '/favicon.ico' || path === '/robots.txt') return env.ASSETS.fetch(req)
+  if (path.startsWith('/_nuxt/') || ['/favicon.ico', '/favicon.svg', '/apple-touch-icon.png', '/og.png', '/robots.txt'].includes(path)) return env.ASSETS.fetch(req)
+  if (path === '/.well-known/security.txt') return new Response(SECURITY_TXT, { headers: { 'content-type': 'text/plain; charset=utf-8' } })
+  if (path === '/' && (req.method === 'GET' || req.method === 'HEAD')) return new Response(HOME, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'public, max-age=300' } })
 
   throw new HttpError(404, 'Not found')
 }

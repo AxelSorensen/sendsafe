@@ -176,6 +176,8 @@ function onDrop(e: DragEvent) {
   if (e.dataTransfer?.files) stage(e.dataTransfer.files)
 }
 
+useHead({ title: 'Send files securely' })
+
 // Latest installers (built by .github/workflows/release.yml). The GitHub repo must be public for visitors to download.
 const RELEASES = 'https://github.com/AxelSorensen/sendsafe/releases/latest'
 const DL = `${RELEASES}/download`
