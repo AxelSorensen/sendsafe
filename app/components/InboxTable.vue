@@ -86,6 +86,7 @@ const cols = 'grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 sm:grid-c
           <div class="min-w-0">
             <p class="flex items-center gap-2">
               <span class="truncate text-left text-sm text-slate-900" :class="unread(f.id) ? 'font-bold' : 'font-normal'">{{ f.name }}</span>
+              <span v-if="assess(f.name)" class="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800" :title="assess(f.name) || ''">Risky</span>
               <span v-if="fresh.includes(f.id)" class="shrink-0 rounded bg-brand-600 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">New</span>
             </p>
             <p class="mt-0.5 text-xs text-slate-500 sm:hidden">{{ size(f.size) }} · {{ time(f.created_at) }}</p>
@@ -96,7 +97,7 @@ const cols = 'grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 sm:grid-c
         <div class="flex justify-end gap-1" @click.stop>
           <button :disabled="locked || busyId === f.id" class="btn-ghost gap-2 text-brand-700" @click="$emit('download', f)">
             <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11" /><path d="M7 11l5 5 5-5" /><path d="M5 20h14" /></svg>
-            Download
+            {{ busyId === f.id ? 'Saving…' : 'Download' }}
           </button>
           <button class="btn-danger" @click="$emit('remove', f)">Delete</button>
         </div>

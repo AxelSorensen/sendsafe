@@ -20,6 +20,51 @@ const kind = ref<Kind>('none')
 const url = ref('')
 const text = ref('')
 const buffer = ref<ArrayBuffer | null>(null)
+// PDFs are drawn with pdf.js instead of the system viewer: some webviews (Linux, and some Mac/Windows builds) cannot show them.
+const pdfBox = ref<HTMLElement | null>(null)
+const pdfBytes = ref<Uint8Array | null>(null)
+const pdfInfo = ref('')
+const pdfFailed = ref(false)
+const pdfLoading = ref(true)
+let pdfDoc: any = null
+let gone = false
+
+async function renderPdf() {
+  const bytes = pdfBytes.value
+  if (!bytes) return
+  try {
+    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
+    const { default: worker } = await import('pdfjs-dist/legacy/build/pdf.worker.mjs?url')
+    pdfjs.GlobalWorkerOptions.workerSrc = worker
+    pdfDoc = await pdfjs.getDocument({ data: bytes.slice(), isEvalSupported: false }).promise
+    await nextTick()
+    const box = pdfBox.value
+    if (!box) return
+    const total = pdfDoc.numPages as number
+    const shown = Math.min(total, 150)
+    const width = Math.max(box.clientWidth - 32, 280)
+    const ratio = Math.min(window.devicePixelRatio || 1, 2)
+    for (let n = 1; n <= shown && !gone; n++) {
+      pdfInfo.value = `Page ${n} of ${total}`
+      const page = await pdfDoc.getPage(n)
+      const base = page.getViewport({ scale: 1 })
+      const vp = page.getViewport({ scale: Math.min(width / base.width, 2.5) * ratio })
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.floor(vp.width)
+      canvas.height = Math.floor(vp.height)
+      canvas.style.width = `${Math.floor(vp.width / ratio)}px`
+      canvas.className = 'mx-auto mb-3 max-w-full bg-white shadow'
+      box.appendChild(canvas)
+      pdfLoading.value = false
+      await page.render({ canvasContext: canvas.getContext('2d')!, viewport: vp }).promise
+    }
+    pdfLoading.value = false
+    pdfInfo.value = total > shown ? `Showing the first ${shown} of ${total} pages. Download to see all of it.` : ''
+  } catch {
+    pdfLoading.value = false
+    pdfFailed.value = true
+  }
+}
 
 // Office viewers run fully in the browser; documents are never sent anywhere.
 const VueOfficeExcel = defineAsyncComponent(async () => { await import('@vue-office/excel/lib/v3/index.css'); return (await import('@vue-office/excel/lib/v3/vue-office-excel.mjs')).default as any })
@@ -73,8 +118,8 @@ onMounted(async () => {
         else {
           const isPdf = /\.pdf$/i.test(pick)
           kind.value = isPdf ? 'pdf' : 'image'
-          const type = isPdf ? 'application/pdf' : /png$/i.test(pick) ? 'image/png' : 'image/jpeg'
-          url.value = URL.createObjectURL(new Blob([found[pick]!], { type }))
+          if (isPdf) pdfBytes.value = found[pick]!
+          else url.value = URL.createObjectURL(new Blob([found[pick]!], { type: /png$/i.test(pick) ? 'image/png' : 'image/jpeg' }))
         }
       } else if (k === 'docx' || k === 'pptx') {
         buffer.value = plain
@@ -83,6 +128,8 @@ onMounted(async () => {
         const list: { name: string, size: number }[] = []
         unzipSync(new Uint8Array(plain), { filter: (f) => { list.push({ name: f.name, size: f.originalSize }); return false } })
         entries.value = list
+      } else if (k === 'pdf') {
+        pdfBytes.value = new Uint8Array(plain)
       } else if (mime === 'heic') {
         const { default: heic2any } = await import('heic2any')
         const png = (await heic2any({ blob: new Blob([plain], { type: 'image/heic' }), toType: 'image/png' })) as Blob
@@ -90,6 +137,7 @@ onMounted(async () => {
       } else url.value = URL.createObjectURL(new Blob([plain], { type: mime })) // fixed safe MIME, never from the file
     }
     state.value = 'ready'
+    if (pdfBytes.value) { await nextTick(); renderPdf() }
   } catch {
     state.value = 'error'
   }
@@ -97,6 +145,8 @@ onMounted(async () => {
 
 function onKey(e: KeyboardEvent) { if (e.key === 'Escape') emit('close') }
 onBeforeUnmount(() => {
+  gone = true
+  pdfDoc?.destroy?.()
   window.removeEventListener('keydown', onKey)
   window.removeEventListener('popstate', onPop)
   document.documentElement.style.overflow = prevOverflow.html
@@ -124,7 +174,14 @@ onBeforeUnmount(() => {
           This file type can't be previewed in the app.
         </p>
         <img v-else-if="kind === 'image'" :src="url" :alt="file.name" class="mx-auto max-h-full max-w-full object-contain p-4">
-        <iframe v-else-if="kind === 'pdf'" :src="url" title="PDF preview" class="size-full border-0" />
+        <div v-else-if="kind === 'pdf'" class="p-4">
+          <p v-if="pdfFailed" class="py-16 text-center text-sm text-slate-500">This PDF could not be previewed. Use Download to open it in your PDF reader.</p>
+          <template v-else>
+            <p v-if="pdfLoading" class="py-16 text-center text-sm text-slate-500">Loading PDF…</p>
+            <div ref="pdfBox" />
+            <p v-if="pdfInfo" class="pb-2 text-center text-xs text-slate-500">{{ pdfInfo }}</p>
+          </template>
+        </div>
         <video v-else-if="kind === 'video'" :src="url" controls class="mx-auto max-h-full max-w-full" />
         <div v-else-if="kind === 'audio'" class="grid h-full place-items-center"><audio :src="url" controls /></div>
         <div v-else-if="kind === 'sheet' && buffer" class="relative size-full bg-white"><VueOfficeExcel :src="buffer" class="absolute inset-0 !h-full" style="height:100%" /></div>

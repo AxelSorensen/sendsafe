@@ -37,7 +37,7 @@ Canonical: https://sendsafe-relay.sendsafe.workers.dev/.well-known/security.txt
 const DL_BASE = 'https://github.com/AxelSorensen/sendsafe/releases/latest/download'
 
 const HOME = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Download | SendSafe</title><meta name="description" content="Download SendSafe for Mac and Windows. Send and receive sensitive files safely, end-to-end encrypted.">
+<title>Download | SendSafe</title><meta name="description" content="Download SendSafe for Mac, Windows and Linux. Send and receive sensitive files safely, end-to-end encrypted.">
 <meta name="robots" content="noindex"><meta name="theme-color" content="#dbeafe">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <style>
@@ -70,6 +70,8 @@ code{background:#f1f5f9;padding:.1rem .35rem;border-radius:.35rem;font-size:.8re
 <option value="mac-arm">Mac · Apple silicon</option>
 <option value="mac-intel">Mac · Intel</option>
 <option value="win">Windows 10 / 11</option>
+<option value="linux-deb">Linux · Ubuntu, Debian, Mint (.deb)</option>
+<option value="linux-app">Linux · Other (AppImage)</option>
 </select></p>
 <div id="after"><h2>After you download (Mac)</h2><ol>
 <li><span>Open the downloaded file and drag <b>SendSafe</b> into <b>Applications</b>.</span></li>
@@ -79,14 +81,15 @@ code{background:#f1f5f9;padding:.1rem .35rem;border-radius:.35rem;font-size:.8re
 <details><summary>Help installing</summary>
 <p><b>Which Mac?</b> Apple menu, About This Mac. "Chip: Apple M…" means Apple silicon, "Processor: Intel" means Intel.</p>
 <p><b>Mac:</b> open the file, drag SendSafe to Applications, then open it. If macOS says it can't verify it, click Done, open System Settings, Privacy &amp; Security, scroll down and click <b>Open Anyway</b> next to SendSafe (older macOS: right-click the app, choose Open). If it says "damaged", run <code>xattr -cr /Applications/SendSafe.app</code> in Terminal.</p>
+<p><b>Linux:</b> for Ubuntu, Debian or Mint, open the .deb file and click Install (or run <code>sudo apt install ./SendSafe-linux.deb</code>). For other distributions, download the AppImage, make it executable (<code>chmod +x SendSafe-linux.AppImage</code>) and double-click it. 64-bit Intel/AMD only.</p>
 <p><b>Windows:</b> run the installer. If it says "Windows protected your PC", click More info, then Run anyway.</p>
 </details>
 </main>
 <script>
-(function(){var B='${DL_BASE}',P={'mac-arm':['Download for Mac','Apple silicon','/SendSafe-mac-arm.dmg'],'mac-intel':['Download for Mac','Intel','/SendSafe-mac-intel.dmg'],'win':['Download for Windows','Windows 10 / 11','/SendSafe-windows.exe']};
+(function(){var B='${DL_BASE}',P={'mac-arm':['Download for Mac','Apple silicon','/SendSafe-mac-arm.dmg'],'mac-intel':['Download for Mac','Intel','/SendSafe-mac-intel.dmg'],'win':['Download for Windows','Windows 10 / 11','/SendSafe-windows.exe'],'linux-deb':['Download for Linux','.deb · Ubuntu, Debian, Mint','/SendSafe-linux.deb'],'linux-app':['Download for Linux','AppImage','/SendSafe-linux.AppImage']};
 var sel=document.getElementById('os'),dl=document.getElementById('dl');
 function set(k){var p=P[k];document.getElementById('dlt').textContent=p[0];document.getElementById('dls').textContent=p[1];dl.href=B+p[2];sel.value=k}
-var ua=navigator.userAgent;set(/Windows/.test(ua)?'win':'mac-arm');
+var ua=navigator.userAgent;set(/Windows/.test(ua)?'win':/Android/.test(ua)?'mac-arm':/Linux|X11/.test(ua)?'linux-deb':'mac-arm');
 sel.addEventListener('change',function(){set(sel.value)})})();
 </script></body></html>`
 

@@ -1,7 +1,7 @@
-// Light, dark, or follow the system. Remembered in this browser; the class on <html> switches every colour (see main.css).
+// Light by default; dark or follow-the-system are opt-in. Remembered in this browser; the class on <html> switches every colour (see main.css).
 export type Theme = 'light' | 'dark' | 'system'
 const KEY = 'sendsafe-theme'
-const theme = ref<Theme>('system')
+const theme = ref<Theme>('light')
 
 function apply() {
   // Dark mode belongs to the desktop app only; web pages (upload links) always stay light.

@@ -58,8 +58,8 @@ const fmtSize = (n: number) => n >= 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1
 
 const staged = ref<File[]>([])
 const barShown = computed(() => status.value === 'ok' && (phase.value === 'result' || staged.value.length > 0))
-// Room reserved under the page for the fixed bottom bar (list of up to 3 rows + button), phones only.
-const barSpace = computed(() => phase.value === 'result' ? '8rem' : `${9 + Math.min(staged.value.length, 3) * 2.75}rem`)
+// Room reserved under the page for the fixed bottom bar (list of up to 3 rows + button).
+const barSpace = computed(() => phase.value === 'result' ? '8rem' : `${10.5 + Math.min(staged.value.length, 3) * 3}rem`)
 const sending = ref(false)
 const expiresText = computed(() => info.value ? new Date(info.value.expiresAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '')
 const slotsLeft = computed(() => (info.value?.filesLeft ?? 0) - staged.value.length)
@@ -183,7 +183,7 @@ const INSTALL_URL = '/download'
 </script>
 
 <template>
-  <main class="mx-auto flex min-h-dvh max-w-xl flex-col justify-start px-4 py-6 sm:justify-center sm:py-12" :class="barShown && 'pb-[var(--bar)] sm:pb-12'" :style="{ '--bar': barSpace }">
+  <main class="mx-auto flex min-h-dvh max-w-xl flex-col justify-start px-4 py-6 sm:justify-center sm:py-12" :class="barShown && 'pb-[var(--bar)]'" :style="{ '--bar': barSpace }">
     <div class="mb-5 flex justify-center sm:mb-8"><BrandLogo /></div>
 
     <LinkStatus v-if="status !== 'ok' || !info" :kind="status === 'ok' ? 'invalid' : status" :checking="checking" @retry="check()" />
@@ -230,10 +230,10 @@ const INSTALL_URL = '/download'
         </li>
       </ul>
 
-      <div class="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_-12px_rgba(15,23,42,0.25)] backdrop-blur sm:static sm:z-auto sm:mt-4 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none" :class="busy && 'invisible'">
+      <div class="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_-12px_rgba(15,23,42,0.25)] backdrop-blur" :class="busy && 'invisible'">
         <div class="mx-auto flex max-w-xl flex-col gap-2 sm:flex-row">
-          <button v-if="failedItems.length" type="button" class="btn flex-1 !py-4 !text-base sm:!py-2.5 sm:!text-sm" @click="retryFailed">Retry failed</button>
-          <button type="button" class="flex-1" :class="[failedItems.length ? 'btn-ghost' : 'btn', '!py-4 !text-base sm:!py-2.5 sm:!text-sm']" @click="sendMore">Send more files</button>
+          <button v-if="failedItems.length" type="button" class="btn flex-1 !py-3.5 !text-base" @click="retryFailed">Retry failed</button>
+          <button type="button" class="flex-1" :class="[failedItems.length ? 'btn-ghost' : 'btn', '!py-3.5 !text-base']" @click="sendMore">Send more files</button>
         </div>
       </div>
     </div>
@@ -263,22 +263,29 @@ const INSTALL_URL = '/download'
         @drop.prevent="onDrop"
       >
         <svg viewBox="0 0 24 24" class="size-8 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0l-4 4m4-4l4 4" /><path d="M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3" /></svg>
-        <span class="text-sm font-medium">Drop files here or click to browse</span>
+        <span class="text-sm font-medium">{{ staged.length ? 'Add more files' : 'Drop files here or click to browse' }}</span>
         <span class="text-xs text-slate-500">Up to {{ mb(info.maxFileBytes) }} MB each · {{ info.filesLeft }} file(s) left</span>
         <input type="file" multiple class="hidden" @change="onPick">
       </label>
 
-      <div v-if="staged.length" class="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_-12px_rgba(15,23,42,0.25)] backdrop-blur sm:static sm:z-auto sm:mt-5 sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:backdrop-blur-none">
+      <div v-if="staged.length" class="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_-12px_rgba(15,23,42,0.25)] backdrop-blur">
         <div class="mx-auto max-w-xl">
-          <p class="text-xs font-medium text-slate-500">Ready to send to {{ info.ownerName || info.label }}</p>
-          <ul class="mt-1 max-h-[8.25rem] divide-y divide-slate-100 overflow-y-auto text-sm sm:max-h-none">
-            <li v-for="(f, i) in staged" :key="i" class="flex h-11 items-center justify-between gap-4 sm:h-auto sm:py-2.5">
-              <span class="truncate">{{ f.name }} <span class="text-xs text-slate-400">{{ fmtSize(f.size) }}</span></span>
+          <p class="flex items-center gap-2 text-sm font-semibold text-slate-900">
+            <span class="size-2 rounded-full bg-amber-500" />
+            {{ staged.length }} file{{ staged.length > 1 ? 's' : '' }} selected · not sent yet
+          </p>
+          <ul class="mt-2 max-h-[9.75rem] divide-y divide-slate-100 overflow-y-auto rounded-xl border border-slate-200 bg-white text-sm">
+            <li v-for="(f, i) in staged" :key="i" class="flex h-12 items-center justify-between gap-3 px-3">
+              <span class="flex min-w-0 items-center gap-2.5">
+                <svg viewBox="0 0 24 24" class="size-5 shrink-0 text-brand-600" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z" /><path d="M14 3v5h5" /></svg>
+                <span class="truncate font-medium text-slate-800">{{ f.name }}</span>
+                <span class="shrink-0 text-xs text-slate-400">{{ fmtSize(f.size) }}</span>
+              </span>
               <button type="button" class="shrink-0 px-2 py-2 text-xs text-slate-500 hover:text-red-600" @click="unstage(i)">Remove</button>
             </li>
           </ul>
           <p v-if="slotsLeft < 0" class="mt-2 text-xs text-red-600">Too many files: only {{ info.filesLeft }} allowed.</p>
-          <button type="button" class="btn mt-3 w-full !py-4 !text-base sm:mt-4 sm:!py-2.5 sm:!text-sm" :disabled="sending || slotsLeft < 0" @click="confirmSend">
+          <button type="button" class="btn mt-3 w-full !py-3.5 !text-base" :disabled="sending || slotsLeft < 0" @click="confirmSend">
             Encrypt &amp; send {{ staged.length }} file{{ staged.length > 1 ? 's' : '' }}
           </button>
         </div>

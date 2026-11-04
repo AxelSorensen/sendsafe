@@ -39,18 +39,27 @@ async function confirmEnroll() {
 // Save is only enabled once something differs from what is stored.
 const snapshot = ref(JSON.stringify(form))
 const dirty = computed(() => JSON.stringify(form) !== snapshot.value)
+// Turning off a second step needs a current authenticator code first.
+const weakCode = ref('')
+const needsCode = computed(() => {
+  if (!totpConfirmed.value) return false
+  const was = JSON.parse(snapshot.value)
+  return (was.requireTotp && !form.requireTotp) || (was.unlockMode !== 'password' && form.unlockMode === 'password')
+})
 
 async function save() {
   saving.value = true
   error.value = ''
   saved.value = false
   try {
-    await $fetch('/api/settings', { method: 'PATCH', body: { ...form } })
+    await $fetch('/api/settings', { method: 'PATCH', body: { ...form, code: needsCode.value ? weakCode.value : undefined } })
     snapshot.value = JSON.stringify(form)
+    weakCode.value = ''
     saved.value = true
     setTimeout(() => (saved.value = false), 2000)
   } catch (e: any) {
-    error.value = e?.data?.statusMessage || 'Could not save settings.'
+    const m = e?.data?.statusMessage
+    error.value = m === 'Invalid code' ? 'That code is not right. Enter the current one.' : m === 'Code already used' ? 'That code was just used. Wait for the next one.' : (m || 'Could not save settings.')
   } finally {
     saving.value = false
   }
@@ -167,6 +176,11 @@ async function toggleSharing() {
       <p class="mt-1 text-xs text-slate-500">You get a few seconds of warning first and can keep using the app.</p>
     </div>
 
+    <div v-if="needsCode" class="rounded-xl border border-amber-200 bg-amber-50 p-4">
+      <p class="text-sm font-medium text-slate-800">Confirm with your authenticator</p>
+      <p class="mt-0.5 text-xs text-slate-600">Turning off a second step needs a current 6-digit code first.</p>
+      <input v-model="weakCode" inputmode="numeric" maxlength="6" placeholder="123456" class="field mt-3 max-w-48 tracking-[0.3em]" aria-label="Authenticator code">
+    </div>
     <p v-if="error" class="alert-error">{{ error }}</p>
     <div class="flex items-center justify-end gap-3">
       <Transition name="saved">
@@ -175,7 +189,7 @@ async function toggleSharing() {
           Saved
         </span>
       </Transition>
-      <button class="btn" :disabled="saving || !dirty">{{ saving ? 'Saving…' : 'Save settings' }}</button>
+      <button class="btn" :disabled="saving || !dirty || (needsCode && weakCode.length < 6)">{{ saving ? 'Saving…' : 'Save settings' }}</button>
     </div>
   </form>
 

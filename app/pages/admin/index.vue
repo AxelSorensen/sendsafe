@@ -186,26 +186,69 @@ async function disableLink() {
   await refresh()
 }
 
+// Where saved files go is shown after every download. In the desktop app they are written to Downloads/SendSafe; in a browser the browser decides.
+const inApp = import.meta.client && !!(window as any).__TAURI_INTERNALS__
+const save = ref<null | { state: 'working' | 'saved', name: string, path?: string, quarantined?: boolean }>(null)
+const risky = ref<null | { name: string, type: string, plain: ArrayBuffer, reason: string }>(null)
+
 async function download(item: { id: string }) {
   const f = files.value.find(x => x.id === item.id)
   if (!f || !privateKey.value) return
   markSeen(f.id)
   busyId.value = f.id
+  error.value = ''
+  save.value = { state: 'working', name: f.name }
   try {
     const cipher = await $fetch<Blob>(`/api/files/${f.id}`, { responseType: 'blob' })
     const meta = await decryptMeta(privateKey.value, f.enc)
     const plain = await decryptFile(privateKey.value, f.enc, await cipher.arrayBuffer())
-    const url = URL.createObjectURL(new Blob([plain], { type: meta.type || 'application/octet-stream' }))
-    const a = document.createElement('a')
-    a.href = url
-    a.download = meta.name
-    a.click()
-    setTimeout(() => URL.revokeObjectURL(url), 10_000)
-  } catch {
-    error.value = 'Decryption failed.'
+    const reason = assess(meta.name, new Uint8Array(plain, 0, Math.min(plain.byteLength, 8)))
+    if (reason) {
+      // Suspicious: nothing is written until the person confirms, and the copy is saved so it cannot be opened by accident.
+      risky.value = { name: meta.name, type: meta.type, plain, reason }
+      save.value = null
+      return
+    }
+    await saveFile(meta.name, meta.type, plain, false)
+  } catch (e: any) {
+    save.value = null
+    error.value = e?.data?.statusMessage || (e?.name === 'FetchError' ? 'Could not save the file.' : 'Decryption failed.')
   } finally {
     busyId.value = ''
   }
+}
+
+async function saveFile(name: string, type: string, plain: ArrayBuffer, quarantined: boolean) {
+  const outName = quarantined ? `${name}.quarantine` : name
+  save.value = { state: 'working', name: outName }
+  if (inApp) {
+    const r = await $fetch<{ path: string }>('/api/files/save', {
+      method: 'POST',
+      body: new Blob([plain]),
+      headers: { 'content-type': 'application/octet-stream', 'x-name': encodeURIComponent(outName) }
+    })
+    save.value = { state: 'saved', name: outName, path: r.path, quarantined }
+    return
+  }
+  const url = URL.createObjectURL(new Blob([plain], { type: quarantined ? 'application/octet-stream' : type || 'application/octet-stream' }))
+  const a = document.createElement('a')
+  a.href = url
+  a.download = outName
+  a.click()
+  setTimeout(() => URL.revokeObjectURL(url), 10_000)
+  save.value = { state: 'saved', name: outName, quarantined }
+}
+
+async function saveRisky() {
+  const r = risky.value
+  if (!r) return
+  risky.value = null
+  try { await saveFile(r.name, r.type, r.plain, true) } catch { save.value = null; error.value = 'Could not save the file.' }
+}
+
+async function reveal() {
+  if (!save.value?.path) return
+  try { await $fetch('/api/files/reveal', { method: 'POST', body: { path: save.value.path } }) } catch { error.value = 'Could not open the folder.' }
 }
 
 async function remove(id: string) {
@@ -296,6 +339,34 @@ watch(privateKey, () => refresh())
     </Teleport>
 
     <p v-if="error" class="alert-error">{{ error }}</p>
+    <div v-if="save" class="flex shrink-0 items-center gap-3 rounded-xl border p-4" :class="save.state === 'saved' ? (save.quarantined ? 'border-amber-200 bg-amber-50' : 'border-brand-100 bg-brand-50') : 'border-slate-200 bg-white'" role="status">
+      <svg v-if="save.state === 'working'" viewBox="0 0 24 24" class="size-5 shrink-0 animate-spin text-slate-500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 11-6.2-8.6" /></svg>
+      <svg v-else viewBox="0 0 24 24" class="size-5 shrink-0 text-brand-600" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+      <div class="min-w-0 flex-1">
+        <p class="truncate text-sm font-medium text-slate-900">{{ save.state === 'working' ? `Decrypting and saving “${save.name}”…` : `Saved “${save.name}”` }}</p>
+        <p v-if="save.state === 'saved'" class="mt-0.5 break-all text-xs text-slate-600">
+          <template v-if="save.path">Location: {{ save.path }}</template>
+          <template v-else>Your browser saved it to its download folder.</template>
+          <template v-if="save.quarantined"> Renamed with .quarantine so it cannot run by accident.</template>
+        </p>
+      </div>
+      <button v-if="save.state === 'saved' && save.path" type="button" class="btn-ghost shrink-0" @click="reveal">Show in folder</button>
+      <button v-if="save.state === 'saved'" type="button" class="shrink-0 px-2 py-2 text-xs text-slate-500 hover:text-slate-800" @click="save = null">Dismiss</button>
+    </div>
+    <Teleport to="body">
+      <div v-if="risky" class="fixed inset-0 z-50 grid h-dvh w-screen place-items-center bg-slate-900/80 p-4 backdrop-blur-sm" @click.self="risky = null">
+        <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" role="alertdialog" aria-labelledby="risk-title">
+          <h2 id="risk-title" class="text-lg font-semibold tracking-tight">This file looks risky</h2>
+          <p class="mt-2 break-all text-sm font-medium text-slate-800">{{ risky.name }}</p>
+          <p class="mt-1 text-sm text-slate-600">{{ risky.reason }}</p>
+          <p class="mt-3 text-sm text-slate-600">Programs like this can harm your computer. Only keep it if you know and trust the sender. A quarantined copy is saved with <code>.quarantine</code> added to its name, so it will not open by double-click.</p>
+          <div class="mt-5 flex justify-end gap-2">
+            <button type="button" class="btn-ghost" @click="risky = null">Don't save</button>
+            <button type="button" class="btn" @click="saveRisky">Save quarantined copy</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
     <div v-if="manualLink" class="shrink-0 rounded-xl border border-slate-200 bg-white p-4">
       <p class="text-sm font-medium">Your computer blocked automatic copying</p>
       <p class="mt-0.5 text-xs text-slate-500">Select the link below and copy it (Cmd/Ctrl + C).</p>

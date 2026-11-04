@@ -23,13 +23,13 @@ pnpm dev
 
 Production: `pnpm build && node .output/server/index.mjs`
 
-## Desktop app (installer for Mac and Windows)
+## Desktop app (installer for Mac, Windows and Linux)
 
 `desktop/` wraps the app in a Tauri shell. It bundles its own Node runtime, so users install nothing else. Uploads arrive through the Cloudflare relay in `relay/`, so no tunnel or port forwarding is needed. The app lives in the menu bar/tray, starts on login, and shows native notifications.
 
 **One-time:** `cd relay && pnpm install && pnpm run setup` (free Cloudflare account). Put the printed address in `desktop/.env` as `SENDSAFE_RELAY_URL=…`.
 
-**Release (installers for Mac arm + Intel + Windows):** add the same URL as the GitHub repo secret `SENDSAFE_RELAY_URL`, then `git tag v0.1.0 && git push --tags`. The *Release desktop app* workflow attaches `.dmg` and `.exe` installers to a release.
+**Release (installers for Mac arm + Intel + Windows + Linux):** add the same URL as the GitHub repo secret `SENDSAFE_RELAY_URL`, then `git tag v0.1.0 && git push --tags`. The *Release desktop app* workflow attaches `.dmg`, `.exe`, `.deb` and `.AppImage` installers to a release.
 
 **Local build:** install Rust, then `cd desktop && pnpm install && pnpm run build`.
 
