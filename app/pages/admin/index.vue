@@ -105,15 +105,32 @@ async function manualRefresh() {
   }
 }
 
+// The link is worked out ahead of time so Copy can write to the clipboard right inside the click (strict webviews need that).
+const readyUrl = ref('')
+const manualLink = ref('') // shown only if the clipboard is blocked, so it can still be copied by hand
+async function prepareUrl() {
+  readyUrl.value = ''
+  if (!active.value || !privateKey.value) return
+  try { readyUrl.value = await linkUrl(privateKey.value, active.value) } catch { readyUrl.value = '' }
+}
+watch([active, privateKey, tunnelUrl], prepareUrl, { immediate: true })
+
 async function copy() {
   if (!active.value || !privateKey.value) return
   error.value = ''
-  try {
-    await copyLink(privateKey.value, active.value)
+  manualLink.value = ''
+  let url = readyUrl.value
+  if (!url) {
+    try { url = await linkUrl(privateKey.value, active.value) } catch {
+      error.value = 'This link cannot be copied because it was made by an older version. Create a new link.'
+      return
+    }
+  }
+  if (await writeClipboard(url)) {
     copied.value = true
     setTimeout(() => (copied.value = false), 1800)
-  } catch {
-    error.value = 'Could not copy link.'
+  } else {
+    manualLink.value = url
   }
 }
 
@@ -279,6 +296,11 @@ watch(privateKey, () => refresh())
     </Teleport>
 
     <p v-if="error" class="alert-error">{{ error }}</p>
+    <div v-if="manualLink" class="shrink-0 rounded-xl border border-slate-200 bg-white p-4">
+      <p class="text-sm font-medium">Your computer blocked automatic copying</p>
+      <p class="mt-0.5 text-xs text-slate-500">Select the link below and copy it (Cmd/Ctrl + C).</p>
+      <input readonly :value="manualLink" class="field mt-3 font-mono text-xs" aria-label="Sharing link" @focus="($event.target as HTMLInputElement).select()">
+    </div>
 
     <FileViewer
       v-if="viewing && privateKey"
