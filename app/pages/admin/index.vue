@@ -188,7 +188,11 @@ async function disableLink() {
 
 // Where saved files go is shown after every download. In the desktop app they are written to Downloads/SendSafe; in a browser the browser decides.
 const inApp = import.meta.client && !!(window as any).__TAURI_INTERNALS__
-const save = ref<null | { state: 'working' | 'saved', name: string, path?: string, quarantined?: boolean }>(null)
+const { save } = useDownloadToast()
+// Which file's Download button just finished, so the button itself can show a check for a moment.
+const savedId = ref('')
+let savedTimer: ReturnType<typeof setTimeout> | undefined
+function flashSaved(id: string) { savedId.value = id; clearTimeout(savedTimer); savedTimer = setTimeout(() => (savedId.value = ''), 1800) }
 const risky = ref<null | { name: string, type: string, plain: ArrayBuffer, reason: string }>(null)
 
 async function download(item: { id: string }) {
@@ -210,6 +214,7 @@ async function download(item: { id: string }) {
       return
     }
     await saveFile(meta.name, meta.type, plain, false)
+    flashSaved(f.id)
   } catch (e: any) {
     save.value = null
     error.value = e?.data?.statusMessage || (e?.name === 'FetchError' ? 'Could not save the file.' : 'Decryption failed.')
@@ -244,11 +249,6 @@ async function saveRisky() {
   if (!r) return
   risky.value = null
   try { await saveFile(r.name, r.type, r.plain, true) } catch { save.value = null; error.value = 'Could not save the file.' }
-}
-
-async function reveal() {
-  if (!save.value?.path) return
-  try { await $fetch('/api/files/reveal', { method: 'POST', body: { path: save.value.path } }) } catch { error.value = 'Could not open the folder.' }
 }
 
 async function remove(id: string) {
@@ -339,20 +339,6 @@ watch(privateKey, () => refresh())
     </Teleport>
 
     <p v-if="error" class="alert-error">{{ error }}</p>
-    <div v-if="save" class="flex shrink-0 items-center gap-3 rounded-xl border p-4" :class="save.state === 'saved' ? (save.quarantined ? 'border-amber-200 bg-amber-50' : 'border-brand-100 bg-brand-50') : 'border-slate-200 bg-white'" role="status">
-      <svg v-if="save.state === 'working'" viewBox="0 0 24 24" class="size-5 shrink-0 animate-spin text-slate-500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 11-6.2-8.6" /></svg>
-      <svg v-else viewBox="0 0 24 24" class="size-5 shrink-0 text-brand-600" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
-      <div class="min-w-0 flex-1">
-        <p class="truncate text-sm font-medium text-slate-900">{{ save.state === 'working' ? `Decrypting and saving “${save.name}”…` : `Saved “${save.name}”` }}</p>
-        <p v-if="save.state === 'saved'" class="mt-0.5 break-all text-xs text-slate-600">
-          <template v-if="save.path">Location: {{ save.path }}</template>
-          <template v-else>Your browser saved it to its download folder.</template>
-          <template v-if="save.quarantined"> Renamed with .quarantine so it cannot run by accident.</template>
-        </p>
-      </div>
-      <button v-if="save.state === 'saved' && save.path" type="button" class="btn-ghost shrink-0" @click="reveal">Show in folder</button>
-      <button v-if="save.state === 'saved'" type="button" class="shrink-0 px-2 py-2 text-xs text-slate-500 hover:text-slate-800" @click="save = null">Dismiss</button>
-    </div>
     <Teleport to="body">
       <div v-if="risky" class="fixed inset-0 z-50 grid h-dvh w-screen place-items-center bg-slate-900/80 p-4 backdrop-blur-sm" @click.self="risky = null">
         <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" role="alertdialog" aria-labelledby="risk-title">
@@ -379,7 +365,9 @@ watch(privateKey, () => refresh())
       :private-key="privateKey"
       @close="viewingId = ''"
       @download="download(viewing)"
+      :saving="busyId === viewing.id"
+      :saved="savedId === viewing.id"
     />
-    <InboxTable :files="files" :locked="!privateKey" :busy-id="busyId" :refreshing="refreshing" :seen="seen" :fresh="fresh" @refresh="manualRefresh" @view="f => openFile(f.id)" @download="download" @remove="f => remove(f.id)" />
+    <InboxTable :files="files" :locked="!privateKey" :busy-id="busyId" :saved-id="savedId" :refreshing="refreshing" :seen="seen" :fresh="fresh" @refresh="manualRefresh" @view="f => openFile(f.id)" @download="download" @remove="f => remove(f.id)" />
   </div>
 </template>

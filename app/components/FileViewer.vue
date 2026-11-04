@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const props = defineProps<{ file: { id: string, enc: string, name: string }, privateKey: CryptoKey }>()
+const props = defineProps<{ file: { id: string, enc: string, name: string }, privateKey: CryptoKey, saving?: boolean, saved?: boolean }>()
 const emit = defineEmits<{ close: [], download: [] }>()
 
 type Kind = 'image' | 'pdf' | 'text' | 'video' | 'audio' | 'sheet' | 'iwork' | 'docx' | 'pptx' | 'zip' | 'none'
@@ -162,7 +162,11 @@ onBeforeUnmount(() => {
       <div class="flex items-center justify-between gap-4 border-b border-slate-200 px-5 py-3">
         <p class="truncate text-sm font-semibold">{{ file.name }}</p>
         <div class="flex shrink-0 gap-1">
-          <button class="btn-ghost" @click="emit('download')">Download</button>
+          <button :key="saving ? 'busy' : saved ? 'done' : 'idle'" class="btn-ghost gap-2" :class="saved ? 'dl-press text-brand-600' : saving ? 'dl-press text-slate-500' : ''" :disabled="saving" @click="emit('download')">
+            <svg v-if="saving" viewBox="0 0 24 24" class="size-4 animate-spin" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 11-6.2-8.6" /></svg>
+            <svg v-else-if="saved" viewBox="0 0 24 24" class="toast-check size-4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+            {{ saving ? 'Saving…' : saved ? 'Saved' : 'Download' }}
+          </button>
           <button class="btn-ghost" @click="emit('close')">Close</button>
         </div>
       </div>

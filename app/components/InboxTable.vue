@@ -1,7 +1,7 @@
 <script setup lang="ts">
 export interface InboxFile { id: string, name: string, size: number, created_at: number, link_label: string }
 
-const props = defineProps<{ files: InboxFile[], locked: boolean, busyId: string, refreshing?: boolean, seen: string[], fresh: string[] }>()
+const props = defineProps<{ files: InboxFile[], locked: boolean, busyId: string, savedId?: string, refreshing?: boolean, seen: string[], fresh: string[] }>()
 const emit = defineEmits<{ view: [f: InboxFile], download: [f: InboxFile], remove: [f: InboxFile], refresh: [] }>()
 
 // One quick spin per click, even when nothing new arrives.
@@ -95,9 +95,11 @@ const cols = 'grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 sm:grid-c
         <span class="hidden text-sm text-slate-700 sm:block" :class="unread(f.id) && 'font-bold'">{{ size(f.size) }}</span>
         <span class="hidden text-sm text-slate-700 sm:block" :class="unread(f.id) && 'font-bold'">{{ time(f.created_at) }}</span>
         <div class="flex justify-end gap-1" @click.stop>
-          <button :disabled="locked || busyId === f.id" class="btn-ghost gap-2 text-brand-700" @click="$emit('download', f)">
-            <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11" /><path d="M7 11l5 5 5-5" /><path d="M5 20h14" /></svg>
-            {{ busyId === f.id ? 'Saving…' : 'Download' }}
+          <button :key="busyId === f.id ? 'busy' : savedId === f.id ? 'done' : 'idle'" :disabled="locked || busyId === f.id" class="btn-ghost gap-2" :class="[savedId === f.id ? 'dl-press text-brand-600' : busyId === f.id ? 'dl-press text-slate-500' : 'text-brand-700']" @click="$emit('download', f)">
+            <svg v-if="busyId === f.id" viewBox="0 0 24 24" class="size-4 animate-spin" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 11-6.2-8.6" /></svg>
+            <svg v-else-if="savedId === f.id" viewBox="0 0 24 24" class="toast-check size-4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+            <svg v-else viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11" /><path d="M7 11l5 5 5-5" /><path d="M5 20h14" /></svg>
+            {{ busyId === f.id ? 'Saving…' : savedId === f.id ? 'Saved' : 'Download' }}
           </button>
           <button class="btn-danger" @click="$emit('remove', f)">Delete</button>
         </div>

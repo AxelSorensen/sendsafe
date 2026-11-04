@@ -291,6 +291,7 @@ provide('signOut', logout)
       </div>
     </Transition>
     <Transition name="so">
+      <DownloadToast />
       <div v-if="signingOut" class="fixed inset-0 z-[60] grid place-items-center bg-white" role="status" aria-live="polite">
         <div class="flex flex-col items-center gap-4">
           <svg viewBox="0 0 24 24" class="size-9 animate-spin text-brand-600" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 109 9" /></svg>

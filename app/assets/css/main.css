@@ -87,3 +87,17 @@
 /* Dark overlays stay dark (slate-900 is a light colour in dark mode). */
 .dark .bg-slate-900\/80 { background-color: rgb(0 0 0 / .75) !important; }
 .dark .bg-slate-900\/60 { background-color: rgb(0 0 0 / .62) !important; }
+
+/* Download toast: slides up; when one file replaces another the old one drops away and the new one rises in. */
+.toast-enter-active { transition: opacity .22s ease, transform .3s cubic-bezier(.2, .9, .25, 1.15); }
+.toast-leave-active { transition: opacity .16s ease, transform .16s ease; }
+.toast-enter-from { opacity: 0; transform: translateY(18px) scale(.96); }
+.toast-leave-to { opacity: 0; transform: translateY(-10px) scale(.97); }
+.toast-check path { stroke-dasharray: 24; stroke-dashoffset: 24; animation: toast-draw .4s .12s ease-out forwards; }
+@keyframes toast-draw { to { stroke-dashoffset: 0; } }
+/* Download button: a quick press, then a green check. */
+@keyframes dl-press { 0% { transform: scale(1); } 40% { transform: scale(.93); } 100% { transform: scale(1); } }
+.dl-press { animation: dl-press .28s ease-out; }
+@keyframes dl-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(3px); } }
+.dl-bob { animation: dl-bob .7s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .toast-enter-active, .toast-leave-active { transition: opacity .15s; } .toast-enter-from, .toast-leave-to { transform: none; } .dl-bob, .dl-press, .toast-check path { animation: none; stroke-dashoffset: 0; } }
